@@ -1,0 +1,56 @@
+# Builds the Flatpak on every push and pull request. Pushing a version tag
+# (for example v0.2.0) also publishes a GitHub release with the bundle attached.
+name: Flatpak
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  flatpak:
+    name: Build Flatpak
+    runs-on: ubuntu-latest
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-51
+      options: --privileged
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Check the tag matches the project version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(sed -n "s/^  version: '\(.*\)',$/\1/p" meson.build)
+          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME does not match version $version in meson.build"
+            exit 1
+          fi
+          if ! grep -q "<release version=\"$version\"" data/app.metainfo.xml.in; then
+            echo "::error::data/app.metainfo.xml.in has no <release> entry for $version"
+            exit 1
+          fi
+
+      - uses: flathub-infra/flatpak-github-actions/flatpak-builder@933e9e8ca36e85046ebca8e211f0785c6becac40 # master
+        with:
+          manifest-path: build-aux/flatpak/io.github.jefersondaniel.MarkdownViewer.json
+          bundle: markdown-viewer.flatpak
+          cache-key: flatpak-builder-${{ github.sha }}
+
+      - name: Publish the release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+        with:
+          files: markdown-viewer.flatpak
+          fail_on_unmatched_files: true
+          body: |
+            Download **markdown-viewer.flatpak** below, then open it with GNOME Software or run:
+
+            ```sh
+            flatpak install --user markdown-viewer.flatpak
+            ```
+
+            Installing needs the [Flathub](https://flathub.org/setup) remote, which provides the GNOME runtime.

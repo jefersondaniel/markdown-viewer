@@ -1,0 +1,65 @@
+{
+  "id": "io.github.jefersondaniel.MarkdownViewer",
+  "runtime": "org.gnome.Platform",
+  "runtime-version": "51",
+  "sdk": "org.gnome.Sdk",
+  "sdk-extensions": [
+    "org.freedesktop.Sdk.Extension.vala"
+  ],
+  "command": "gnome-markdown",
+  "finish-args": [
+    "--share=ipc",
+    "--socket=fallback-x11",
+    "--socket=wayland",
+    "--device=dri",
+    "--share=network",
+    "--filesystem=home",
+    "--talk-name=org.gtk.vfs.*",
+    "--filesystem=xdg-run/gvfsd"
+  ],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/vala/bin",
+    "prepend-ld-library-path": "/usr/lib/sdk/vala/lib"
+  },
+  "cleanup": [
+    "/include",
+    "/lib/pkgconfig",
+    "/share/vala",
+    "*.la",
+    "*.a"
+  ],
+  "modules": [
+    {
+      "name": "blueprint-compiler",
+      "buildsystem": "meson",
+      "cleanup": [
+        "*"
+      ],
+      "sources": [
+        {
+          "type": "git",
+          "url": "https://gitlab.gnome.org/GNOME/blueprint-compiler.git",
+          "tag": "v0.16.0",
+          "commit": "04ef0944db56ab01307a29aaa7303df6067cb3c0"
+        }
+      ]
+    },
+    {
+      "name": "gnome-markdown",
+      "buildsystem": "meson",
+      "builddir": true,
+      "sources": [
+        {
+          "type": "dir",
+          "path": "../..",
+          "skip": [
+            "build",
+            ".flatpak-builder",
+            "flatpak-build",
+            ".git"
+          ]
+        }
+      ]
+    }
+  ]
+}

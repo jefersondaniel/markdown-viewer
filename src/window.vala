@@ -5,7 +5,7 @@ namespace Notes {
         EDIT,
     }
 
-    [GtkTemplate (ui = "/org/example/Notes/window.ui")]
+    [GtkTemplate (ui = "/io/github/jefersondaniel/MarkdownViewer/window.ui")]
     public class Window : Adw.ApplicationWindow {
         [GtkChild] unowned Adw.ToastOverlay toast_overlay;
         [GtkChild] unowned Adw.OverlaySplitView split_view;
@@ -50,7 +50,7 @@ namespace Notes {
             { "split", null, null, "false", on_split_changed },
         };
 
-        const string GUIDE_URI = "resource:///org/example/Notes/guide.md";
+        const string GUIDE_URI = "resource:///io/github/jefersondaniel/MarkdownViewer/guide.md";
 
         State state;
         Editor editor;

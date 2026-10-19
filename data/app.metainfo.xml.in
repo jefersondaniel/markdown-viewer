@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>@APP_ID@</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+
+  <name>Notes</name>
+  <summary>Browse, read and write Markdown files</summary>
+  <description>
+    <p>
+      Open a folder and browse its Markdown files in the sidebar. Read them
+      nicely laid out, or switch to the editor to change them. Your changes
+      are saved as you type.
+    </p>
+    <ul>
+      <li>Markdown is shown with native widgets, without a web engine</li>
+      <li>Tables, task lists, block quotes and code with syntax highlighting</li>
+      <li>Edit and preview side by side</li>
+      <li>Find files by name or content in the open folder</li>
+      <li>Follows the system light and dark style</li>
+    </ul>
+  </description>
+
+  <developer id="io.github.jefersondaniel">
+    <name>Jeferson Souza</name>
+  </developer>
+
+  <launchable type="desktop-id">@APP_ID@.desktop</launchable>
+  <provides>
+    <binary>gnome-markdown</binary>
+  </provides>
+
+  <url type="homepage">https://github.com/jefersondaniel/markdown-viewer</url>
+  <url type="bugtracker">https://github.com/jefersondaniel/markdown-viewer/issues</url>
+  <url type="vcs-browser">https://github.com/jefersondaniel/markdown-viewer</url>
+
+  <content_rating type="oars-1.1" />
+
+  <requires>
+    <display_length compare="ge">360</display_length>
+  </requires>
+  <supports>
+    <control>keyboard</control>
+    <control>pointing</control>
+    <control>touch</control>
+  </supports>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#99c1f1</color>
+    <color type="primary" scheme_preference="dark">#1a5fb4</color>
+  </branding>
+
+  <releases>
+    <release version="0.1.0" date="2026-10-19">
+      <description>
+        <p>First release.</p>
+      </description>
+    </release>
+  </releases>
+</component>

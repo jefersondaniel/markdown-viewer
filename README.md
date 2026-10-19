@@ -5,6 +5,18 @@ libadwaita. Open a folder to browse its Markdown files in the sidebar, then read
 edit them. Markdown is parsed and rendered by the app itself into native widgets:
 no web engine and no HTML library.
 
+## Install
+
+Download `markdown-viewer.flatpak` from the
+[latest release](https://github.com/jefersondaniel/markdown-viewer/releases/latest) and open it
+with GNOME Software, or run:
+
+```sh
+flatpak install --user markdown-viewer.flatpak
+```
+
+This needs the [Flathub](https://flathub.org/setup) remote, which provides the GNOME runtime.
+
 ## Build and run
 
 ```sh
@@ -35,7 +47,7 @@ ninja -C build install
 - **New notes:** they start as `Untitled.md` and are renamed after their first line
   when you leave them.
 - **State:** the last folder, the last file and the window state are kept in
-  `~/.config/org.example.Notes/state.ini`.
+  `~/.config/io.github.jefersondaniel.MarkdownViewer/state.ini`.
 
 ## Markdown support
 
@@ -78,6 +90,20 @@ HTML comments are hidden. Any other tag is dropped, but the text inside it is ke
 | `src/files.vala` | File name helpers |
 | `src/app.css` | Styling of rendered Markdown |
 
-The app ID `org.example.Notes` is a placeholder. Change `app_id` and `resource_path` in
-`meson.build`, the prefix in `src/notes.gresource.xml`, the resource paths in
-`src/window.vala`, and the icon file name before publishing.
+## Releasing
+
+The [Flatpak workflow](.github/workflows/flatpak.yml) builds the app on every push and pull
+request. To publish a release:
+
+1. Set the new version in `meson.build`.
+2. Add a matching `<release>` entry to `data/app.metainfo.xml.in`.
+3. Tag the commit and push the tag:
+
+   ```sh
+   git tag v0.2.0
+   git push origin v0.2.0
+   ```
+
+The workflow checks that the tag matches both versions, builds the bundle, and attaches
+`markdown-viewer.flatpak` to a new GitHub release. The Flatpak manifest is in
+`build-aux/flatpak/`.

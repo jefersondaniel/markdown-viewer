@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <gresources>
-  <gresource prefix="/org/example/Notes">
+  <gresource prefix="/io/github/jefersondaniel/MarkdownViewer">
     <file preprocess="xml-stripblanks">window.ui</file>
     <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
     <file>app.css</file>
     <file>guide.md</file>
-    <file alias="icons/scalable/apps/org.example.Notes.svg">../data/icons/org.example.Notes.svg</file>
+    <file alias="icons/scalable/apps/io.github.jefersondaniel.MarkdownViewer.svg">../data/icons/io.github.jefersondaniel.MarkdownViewer.svg</file>
   </gresource>
 </gresources>

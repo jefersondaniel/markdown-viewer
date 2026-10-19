@@ -72,6 +72,9 @@ public class Notes.Application : Adw.Application {
         about.application_icon = Config.APP_ID;
         about.version = Config.VERSION;
         about.comments = _("Browse, read and write Markdown files");
+        about.developer_name = "Jeferson Souza";
+        about.website = "https://github.com/jefersondaniel/markdown-viewer";
+        about.issue_url = "https://github.com/jefersondaniel/markdown-viewer/issues";
         about.license_type = Gtk.License.GPL_3_0;
         about.present (active_window);
     }

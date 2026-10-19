@@ -6,8 +6,8 @@ project('gnome-markdown', ['c', 'vala'],
 
 gnome = import('gnome')
 
-app_id = 'org.example.Notes'
-resource_path = '/org/example/Notes'
+app_id = 'io.github.jefersondaniel.MarkdownViewer'
+resource_path = '/io/github/jefersondaniel/MarkdownViewer'
 
 # The generated C code is noisy; Vala already type-checks everything.
 add_project_arguments('-w', '-DGETTEXT_PACKAGE="gnome-markdown"', language: 'c')
