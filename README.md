@@ -92,18 +92,18 @@ HTML comments are hidden. Any other tag is dropped, but the text inside it is ke
 
 ## Releasing
 
-The [Flatpak workflow](.github/workflows/flatpak.yml) builds the app on every push and pull
-request. To publish a release:
+Releases are automatic. Commit messages follow
+[Conventional Commits](https://www.conventionalcommits.org/) (see [AGENTS.md](AGENTS.md)), and
+[release-please](https://github.com/googleapis/release-please) uses them on every push to
+`main`:
 
-1. Set the new version in `meson.build`.
-2. Add a matching `<release>` entry to `data/app.metainfo.xml.in`.
-3. Tag the commit and push the tag:
+1. It opens or updates a release pull request that bumps `version.txt` and adds the new
+   entries to `CHANGELOG.md`. `feat` commits bump the minor version and `fix` commits the
+   patch version.
+2. Merging that pull request tags the commit (for example `v0.2.0`) and publishes a GitHub
+   release with the changelog.
+3. The [release workflow](.github/workflows/release.yml) then builds the Flatpak and attaches
+   `markdown-viewer.flatpak` to the release.
 
-   ```sh
-   git tag v0.2.0
-   git push origin v0.2.0
-   ```
-
-The workflow checks that the tag matches both versions, builds the bundle, and attaches
-`markdown-viewer.flatpak` to a new GitHub release. The Flatpak manifest is in
-`build-aux/flatpak/`.
+The [Flatpak workflow](.github/workflows/flatpak.yml) also builds the app on every push and
+pull request, to catch build problems early. The Flatpak manifest is in `build-aux/flatpak/`.

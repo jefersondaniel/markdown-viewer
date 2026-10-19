@@ -1,5 +1,21 @@
+# The release date shown in software centers comes from the newest entry that
+# release-please wrote to the changelog, e.g. "## [0.2.0](...) (2026-11-02)".
+release_date = '2026-10-19'
+changelog = meson.project_source_root() / 'CHANGELOG.md'
+if fs.exists(changelog)
+  foreach line : fs.read(changelog).split('\n')
+    line = line.strip()
+    if line.startswith('## ') and line.endswith(')')
+      release_date = line.split('(')[-1].replace(')', '')
+      break
+    endif
+  endforeach
+endif
+
 data_conf = configuration_data()
 data_conf.set('APP_ID', app_id)
+data_conf.set('VERSION', meson.project_version())
+data_conf.set('RELEASE_DATE', release_date)
 
 desktop_file = configure_file(
   input: 'app.desktop.in',

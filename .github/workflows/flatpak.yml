@@ -1,13 +1,18 @@
-# Builds the Flatpak on every push and pull request. Pushing a version tag
-# (for example v0.2.0) also publishes a GitHub release with the bundle attached.
+# Builds the Flatpak on every push and pull request. The release workflow also
+# calls it with a release tag, and then the bundle is attached to that release.
 name: Flatpak
 
 on:
   push:
     branches: [main]
-    tags: ["v*"]
   pull_request:
   workflow_dispatch:
+  workflow_call:
+    inputs:
+      release-tag:
+        description: Tag of the GitHub release to attach the bundle to
+        type: string
+        required: false
 
 jobs:
   flatpak:
@@ -20,19 +25,8 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Check the tag matches the project version
-        if: startsWith(github.ref, 'refs/tags/v')
-        run: |
-          version=$(sed -n "s/^  version: '\(.*\)',$/\1/p" meson.build)
-          if [ "v$version" != "$GITHUB_REF_NAME" ]; then
-            echo "::error::Tag $GITHUB_REF_NAME does not match version $version in meson.build"
-            exit 1
-          fi
-          if ! grep -q "<release version=\"$version\"" data/app.metainfo.xml.in; then
-            echo "::error::data/app.metainfo.xml.in has no <release> entry for $version"
-            exit 1
-          fi
+        with:
+          ref: ${{ inputs.release-tag || github.ref }}
 
       - uses: flathub-infra/flatpak-github-actions/flatpak-builder@933e9e8ca36e85046ebca8e211f0785c6becac40 # master
         with:
@@ -40,13 +34,18 @@ jobs:
           bundle: markdown-viewer.flatpak
           cache-key: flatpak-builder-${{ github.sha }}
 
-      - name: Publish the release
-        if: startsWith(github.ref, 'refs/tags/v')
+      - name: Attach the bundle to the release
+        if: inputs.release-tag
         uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
         with:
+          tag_name: ${{ inputs.release-tag }}
           files: markdown-viewer.flatpak
           fail_on_unmatched_files: true
+          append_body: true
           body: |
+
+            ### Install
+
             Download **markdown-viewer.flatpak** below, then open it with GNOME Software or run:
 
             ```sh

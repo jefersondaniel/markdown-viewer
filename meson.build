@@ -1,9 +1,10 @@
 project('gnome-markdown', ['c', 'vala'],
-  version: '0.1.0',
+  version: files('version.txt'),  # maintained by release-please
   meson_version: '>= 1.0.0',
   default_options: ['warning_level=2'],
 )
 
+fs = import('fs')
 gnome = import('gnome')
 
 app_id = 'io.github.jefersondaniel.MarkdownViewer'

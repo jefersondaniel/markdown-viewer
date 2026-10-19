@@ -1,0 +1,39 @@
+# Releases are driven by Conventional Commits. On every push to main,
+# release-please opens or updates a release pull request with the next version
+# and changelog. Merging that pull request tags the release and publishes it on
+# GitHub, and the Flatpak bundle is then built and attached to it.
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    name: Release Please
+    runs-on: ubuntu-latest
+    outputs:
+      release-created: ${{ steps.release.outputs.release_created }}
+      tag-name: ${{ steps.release.outputs.tag_name }}
+    steps:
+      - id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+  # A release created with the workflow token doesn't trigger other workflows,
+  # so the Flatpak build is called from here.
+  flatpak:
+    name: Flatpak
+    needs: release-please
+    if: needs.release-please.outputs.release-created == 'true'
+    uses: ./.github/workflows/flatpak.yml
+    with:
+      release-tag: ${{ needs.release-please.outputs.tag-name }}
+    permissions:
+      contents: write
