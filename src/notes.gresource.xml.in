@@ -2,7 +2,7 @@
 <gresources>
   <gresource prefix="/io/github/jefersondaniel/MarkdownViewer">
     <file preprocess="xml-stripblanks">window.ui</file>
-    <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+    <file alias="shortcuts.ui" preprocess="xml-stripblanks">@SHORTCUTS_UI@</file>
     <file>app.css</file>
     <file>guide.md</file>
     <file alias="icons/scalable/apps/io.github.jefersondaniel.MarkdownViewer.svg">../data/icons/io.github.jefersondaniel.MarkdownViewer.svg</file>

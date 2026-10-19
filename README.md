@@ -118,5 +118,6 @@ Releases are automatic. Commit messages follow
 3. The [release workflow](.github/workflows/release.yml) then builds the Flatpak and attaches
    `markdown-viewer.flatpak` to the release.
 
-The [Flatpak workflow](.github/workflows/flatpak.yml) also builds the app on every push and
-pull request, to catch build problems early. The Flatpak manifest is in `build-aux/flatpak/`.
+The [Flatpak workflow](.github/workflows/flatpak.yml) also builds the app for pushes and pull
+requests that change the app or its packaging, to catch build problems early. Changes to
+documentation or screenshots don't trigger it. The Flatpak manifest is in `build-aux/flatpak/`.

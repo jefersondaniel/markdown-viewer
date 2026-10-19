@@ -1,11 +1,23 @@
-# Builds the Flatpak on every push and pull request. The release workflow also
-# calls it with a release tag, and then the bundle is attached to that release.
+# Builds the Flatpak when a push or pull request changes something that goes
+# into it. The release workflow also calls it with a release tag, and then the
+# bundle is attached to that release.
+#
+# Version and changelog updates are left out on purpose: they only come from
+# release pull requests, and merging one builds the Flatpak for the release.
 name: Flatpak
 
 on:
   push:
     branches: [main]
+    paths: &app-paths
+      - "src/**"
+      - "data/**"
+      - "!data/screenshots/**"
+      - "meson.build"
+      - "build-aux/**"
+      - ".github/workflows/flatpak.yml"
   pull_request:
+    paths: *app-paths
   workflow_dispatch:
   workflow_call:
     inputs:
@@ -23,6 +35,11 @@ jobs:
       options: --privileged
     permissions:
       contents: write
+    # A newer push to the same branch or pull request makes this build pointless,
+    # but a release build always runs to completion.
+    concurrency:
+      group: flatpak-${{ inputs.release-tag || github.ref }}
+      cancel-in-progress: ${{ !inputs.release-tag }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
