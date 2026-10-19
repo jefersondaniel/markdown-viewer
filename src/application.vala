@@ -29,7 +29,9 @@ public class Notes.Application : Adw.Application {
                 w.close ();
             }
         });
-        add_action (quit_action);        set_accels_for_action ("win.new-note", { "<Control>n" });
+        add_action (quit_action);
+
+        set_accels_for_action ("win.new-note", { "<Control>n" });
         set_accels_for_action ("win.open", { "<Control>o" });
         set_accels_for_action ("win.open-folder", { "<Control><Shift>o" });
         set_accels_for_action ("win.save", { "<Control>s" });
