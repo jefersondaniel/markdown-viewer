@@ -1,5 +1,5 @@
 # Markdown Guide
-A quick tour of what Notes can show
+A quick tour of what Markdown Viewer can show
 
 Open a folder and its Markdown files appear in the sidebar. Pick one to read it, press **Edit** to change it, and it saves by itself as you type.
 
@@ -7,7 +7,7 @@ Open a folder and its Markdown files appear in the sidebar. Pick one to read it,
 You can write **bold**, *italic*, ~~strikethrough~~, `inline code` and [links](https://www.gnome.org). Bare addresses like https://www.gnome.org become links too.
 
 > Block quotes are written with `>` at the start of a line.\
-> — The Notes guide
+> — The Markdown Viewer guide
 
 ## Lists
 - Bullet lists use `-`, `*` or `+`

@@ -6,7 +6,7 @@ template $NotesWindow: Adw.ApplicationWindow {
   default-height: 820;
   width-request: 360;
   height-request: 480;
-  title: _("Notes");
+  title: _("Markdown Viewer");
 
   Adw.Breakpoint {
     condition ("max-width: 760sp")
@@ -28,7 +28,7 @@ template $NotesWindow: Adw.ApplicationWindow {
         [top]
         Adw.HeaderBar {
           title-widget: Adw.WindowTitle sidebar_title {
-            title: _("Notes");
+            title: _("Markdown Viewer");
           };
 
           [start]
@@ -96,7 +96,7 @@ template $NotesWindow: Adw.ApplicationWindow {
         [top]
         Adw.HeaderBar {
           title-widget: Adw.WindowTitle window_title {
-            title: _("Notes");
+            title: _("Markdown Viewer");
           };
 
           [start]
@@ -252,7 +252,7 @@ menu primary_menu {
   section {
     item (_("Markdown Guide"), "win.guide")
     item (_("Keyboard Shortcuts"), "win.keyboard-shortcuts")
-    item (_("About Notes"), "app.about")
+    item (_("About Markdown Viewer"), "app.about")
   }
 }
 

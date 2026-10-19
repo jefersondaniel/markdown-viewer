@@ -1,4 +1,4 @@
-# Notes
+# Markdown Viewer
 
 A native Markdown reader and editor for GNOME, written in Vala with GTK 4 and
 libadwaita. Open a folder to browse its Markdown files in the sidebar, then read or

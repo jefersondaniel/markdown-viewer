@@ -70,7 +70,7 @@ public class Notes.Application : Adw.Application {
 
     void show_about () {
         var about = new Adw.AboutDialog ();
-        about.application_name = _("Notes");
+        about.application_name = _("Markdown Viewer");
         about.application_icon = Config.APP_ID;
         about.version = Config.VERSION;
         about.comments = _("Browse, read and write Markdown files");

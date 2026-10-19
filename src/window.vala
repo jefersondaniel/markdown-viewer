@@ -231,7 +231,7 @@ namespace Notes {
                     file_tree.select_file (doc_file);
                 }
             } else {
-                sidebar_title.title = _("Notes");
+                sidebar_title.title = _("Markdown Viewer");
                 sidebar_title.subtitle = "";
                 sidebar_stack.visible_child_name = "no-folder";
             }
@@ -426,9 +426,9 @@ namespace Notes {
 
         void update_header () {
             if (doc_file == null) {
-                window_title.title = folder != null ? folder.get_basename () : _("Notes");
+                window_title.title = folder != null ? folder.get_basename () : _("Markdown Viewer");
                 window_title.subtitle = "";
-                title = _("Notes");
+                title = _("Markdown Viewer");
                 return;
             }
             if (doc_read_only) {
