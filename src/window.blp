@@ -20,14 +20,14 @@ template $NotesWindow: Adw.ApplicationWindow {
 
   content: Adw.ToastOverlay toast_overlay {
     child: Adw.OverlaySplitView split_view {
-      min-sidebar-width: 260;
+      min-sidebar-width: 240;
       max-sidebar-width: 320;
       sidebar-width-fraction: 0.25;
 
       sidebar: Adw.ToolbarView {
         [top]
         Adw.HeaderBar {
-          title-widget: Adw.WindowTitle {
+          title-widget: Adw.WindowTitle sidebar_title {
             title: _("Notes");
           };
 
@@ -47,126 +47,48 @@ template $NotesWindow: Adw.ApplicationWindow {
           }
         }
 
-        content: Gtk.ScrolledWindow {
-          hscrollbar-policy: never;
+        content: Gtk.Stack sidebar_stack {
+          Gtk.StackPage {
+            name: "no-folder";
 
-          child: Gtk.Box {
-            orientation: vertical;
-
-            styles [
-              "sidebar-content",
-            ]
-
-            Gtk.SearchEntry search_entry {
-              placeholder-text: _("Search notes…");
+            child: Adw.StatusPage {
+              icon-name: "folder-open-symbolic";
+              title: _("No Folder Open");
 
               styles [
-                "sidebar-search",
-              ]
-            }
-
-            Gtk.ListBox collections_list {
-              styles [
-                "navigation-sidebar",
-              ]
-            }
-
-            Gtk.Box {
-              styles [
-                "sidebar-section",
+                "compact",
               ]
 
-              Gtk.Label {
-                label: _("Folders");
-                xalign: 0;
-                hexpand: true;
+              child: Gtk.Button {
+                label: _("Open Folder…");
+                halign: center;
+                action-name: "win.open-folder";
 
                 styles [
-                  "caption-heading",
-                  "dim-label",
-                ]
-              }
-
-              Gtk.Button {
-                icon-name: "folder-new-symbolic";
-                tooltip-text: _("New Folder");
-                action-name: "win.new-folder";
-                valign: center;
-
-                styles [
-                  "flat",
-                  "circular",
-                ]
-              }
-
-              Gtk.Button folders_toggle {
-                icon-name: "pan-up-symbolic";
-                tooltip-text: _("Collapse Folders");
-                valign: center;
-                clicked => $on_folders_toggle();
-
-                styles [
-                  "flat",
-                  "circular",
-                ]
-              }
-            }
-
-            Gtk.Revealer folders_revealer {
-              reveal-child: true;
-
-              child: Gtk.ListBox folders_list {
-                styles [
-                  "navigation-sidebar",
+                  "pill",
+                  "suggested-action",
                 ]
               };
-            }
+            };
+          }
 
-            Gtk.Box {
-              styles [
-                "sidebar-section",
-              ]
+          Gtk.StackPage {
+            name: "folder";
 
-              Gtk.Label notes_header {
-                label: _("Notes");
-                xalign: 0;
-                hexpand: true;
+            child: Gtk.Box {
+              orientation: vertical;
+
+              Gtk.SearchEntry search_entry {
+                placeholder-text: _("Search files…");
 
                 styles [
-                  "caption-heading",
-                  "dim-label",
+                  "sidebar-search",
                 ]
               }
 
-              Gtk.Button empty_trash_button {
-                label: _("Empty Trash");
-                visible: false;
-                valign: center;
-                action-name: "win.empty-trash";
-
-                styles [
-                  "flat",
-                ]
-              }
-            }
-
-            Gtk.ListBox notes_list {
-              styles [
-                "navigation-sidebar",
-                "notes-list",
-              ]
-            }
-
-            Gtk.Label notes_empty {
-              visible: false;
-              label: _("No Notes");
-
-              styles [
-                "dim-label",
-                "notes-empty",
-              ]
-            }
-          };
+              $NotesFileTree file_tree {}
+            };
+          }
         };
       };
 
@@ -267,28 +189,17 @@ template $NotesWindow: Adw.ApplicationWindow {
           };
         }
 
-        [top]
-        Adw.Banner trash_banner {
-          title: _("This note is in the Trash");
-          button-label: _("Restore");
-          action-name: "win.restore-current";
-        }
-
         content: Gtk.Stack content_stack {
           transition-type: crossfade;
 
           Gtk.StackPage {
             name: "empty";
 
-            child: Adw.StatusPage {
+            child: Adw.StatusPage empty_page {
               icon-name: "text-x-generic-symbolic";
-              title: _("No Note Selected");
-              description: _("Pick a note from the sidebar or start a new one");
 
-              child: Gtk.Button {
-                label: _("New Note");
+              child: Gtk.Button empty_button {
                 halign: center;
-                action-name: "win.new-note";
 
                 styles [
                   "pill",
@@ -331,14 +242,15 @@ menu primary_menu {
   section {
     item (_("New Note"), "win.new-note")
     item (_("New Folder…"), "win.new-folder")
+  }
+
+  section {
+    item (_("Open Folder…"), "win.open-folder")
     item (_("Open File…"), "win.open")
   }
 
   section {
-    item (_("Change Notes Folder…"), "win.choose-library")
-  }
-
-  section {
+    item (_("Markdown Guide"), "win.guide")
     item (_("Keyboard Shortcuts"), "win.show-help-overlay")
     item (_("About Notes"), "app.about")
   }
@@ -351,14 +263,13 @@ menu note_menu {
   }
 
   section {
-    item (_("Favorite"), "win.favorite")
     item (_("Rename…"), "win.rename-note")
+    item (_("Show in Files"), "win.show-in-files")
   }
 
   section {
     item (_("Copy Markdown"), "win.copy-markdown")
     item (_("Save a Copy…"), "win.save-copy")
-    item (_("Show in Files"), "win.show-in-files")
   }
 
   section {

@@ -29,10 +29,9 @@ public class Notes.Application : Adw.Application {
                 w.close ();
             }
         });
-        add_action (quit_action);
-
-        set_accels_for_action ("win.new-note", { "<Control>n" });
+        add_action (quit_action);        set_accels_for_action ("win.new-note", { "<Control>n" });
         set_accels_for_action ("win.open", { "<Control>o" });
+        set_accels_for_action ("win.open-folder", { "<Control><Shift>o" });
         set_accels_for_action ("win.save", { "<Control>s" });
         set_accels_for_action ("win.toggle-mode", { "<Control>e" });
         set_accels_for_action ("win.split", { "<Control>backslash" });
@@ -58,8 +57,12 @@ public class Notes.Application : Adw.Application {
     protected override void open (File[] files, string hint) {
         var window = main_window ();
         window.present ();
-        if (files.length > 0) {
-            window.open_file (files[0]);
+        foreach (var file in files) {
+            if (file.query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+                window.open_folder (file);
+            } else {
+                window.open_file (file);
+            }
         }
     }
 
@@ -68,7 +71,7 @@ public class Notes.Application : Adw.Application {
         about.application_name = _("Notes");
         about.application_icon = Config.APP_ID;
         about.version = Config.VERSION;
-        about.comments = _("A native Markdown notebook for GNOME");
+        about.comments = _("Browse, read and write Markdown files");
         about.license_type = Gtk.License.GPL_3_0;
         about.present (active_window);
     }

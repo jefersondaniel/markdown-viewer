@@ -10,7 +10,7 @@ config_vala = configure_file(
 )
 
 blueprints = custom_target('blueprints',
-  input: files('window.blp'),
+  input: files('window.blp', 'gtk/help-overlay.blp'),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
 )
@@ -24,13 +24,14 @@ resources = gnome.compile_resources('notes-resources',
 sources = files(
   'application.vala',
   'editor.vala',
-  'note-store.vala',
+  'files.vala',
   'state.vala',
   'window.vala',
   'markdown/ast.vala',
   'markdown/inline-parser.vala',
   'markdown/parser.vala',
   'markdown/renderer.vala',
+  'widgets/file-tree.vala',
   'widgets/image-view.vala',
   'widgets/wrap-box.vala',
 )

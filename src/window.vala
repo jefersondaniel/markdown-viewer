@@ -1,164 +1,36 @@
 namespace Notes {
 
-    enum Filter {
-        ALL,
-        FAVORITES,
-        TRASH,
-        FOLDER,
-    }
-
     enum Mode {
         VIEW,
         EDIT,
-    }
-
-    class SidebarRow : Gtk.ListBoxRow {
-        public Filter filter;
-        public string folder;
-        Gtk.Label count_label;
-
-        public SidebarRow (Filter filter, string folder, string icon, string label, string icon_class) {
-            this.filter = filter;
-            this.folder = folder;
-
-            var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 12);
-            var image = new Gtk.Image.from_icon_name (icon);
-            image.add_css_class (icon_class);
-            box.append (image);
-
-            var name = new Gtk.Label (label);
-            name.xalign = 0;
-            name.hexpand = true;
-            name.ellipsize = Pango.EllipsizeMode.END;
-            box.append (name);
-
-            count_label = new Gtk.Label ("");
-            count_label.add_css_class ("sidebar-count");
-            box.append (count_label);
-            child = box;
-        }
-
-        public void set_count (int count) {
-            count_label.label = count > 0 ? count.to_string () : "";
-        }
-    }
-
-    class NoteRow : Gtk.ListBoxRow {
-        public Note note;
-
-        public NoteRow (Note note) {
-            this.note = note;
-            add_css_class ("note-row");
-
-            var box = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 12);
-            var icon = new Gtk.Image.from_icon_name ("text-x-generic-symbolic");
-            icon.valign = Gtk.Align.START;
-            icon.add_css_class ("icon-note");
-            box.append (icon);
-
-            var text = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
-            text.hexpand = true;
-            var title = new Gtk.Label (note.title);
-            title.xalign = 0;
-            title.ellipsize = Pango.EllipsizeMode.END;
-            title.add_css_class ("note-row-title");
-            text.append (title);
-
-            var date = new Gtk.Label (format_date (note.modified));
-            date.xalign = 0;
-            date.add_css_class ("note-row-date");
-            text.append (date);
-            box.append (text);
-
-            if (note.favorite) {
-                var star = new Gtk.Image.from_icon_name ("starred-symbolic");
-                star.valign = Gtk.Align.CENTER;
-                star.add_css_class ("icon-favorite");
-                star.add_css_class ("note-row-star");
-                box.append (star);
-            }
-            child = box;
-        }
-
-        public static string format_date (DateTime when) {
-            var local = when.to_local ();
-            var now = new DateTime.now_local ();
-            if (local.get_year () == now.get_year () && local.get_day_of_year () == now.get_day_of_year ()) {
-                return _("Today, %s").printf (local.format ("%H:%M"));
-            }
-            var yesterday = now.add_days (-1);
-            if (local.get_year () == yesterday.get_year () && local.get_day_of_year () == yesterday.get_day_of_year ()) {
-                return _("Yesterday, %s").printf (local.format ("%H:%M"));
-            }
-            if (now.difference (local) < 6 * TimeSpan.DAY) {
-                return local.format ("%A");
-            }
-            return local.format ("%b %-d, %Y");
-        }
     }
 
     [GtkTemplate (ui = "/org/example/Notes/window.ui")]
     public class Window : Adw.ApplicationWindow {
         [GtkChild] unowned Adw.ToastOverlay toast_overlay;
         [GtkChild] unowned Adw.OverlaySplitView split_view;
+        [GtkChild] unowned Adw.WindowTitle sidebar_title;
+        [GtkChild] unowned Gtk.Stack sidebar_stack;
         [GtkChild] unowned Gtk.SearchEntry search_entry;
-        [GtkChild] unowned Gtk.ListBox collections_list;
-        [GtkChild] unowned Gtk.ListBox folders_list;
-        [GtkChild] unowned Gtk.Revealer folders_revealer;
-        [GtkChild] unowned Gtk.Button folders_toggle;
-        [GtkChild] unowned Gtk.Label notes_header;
-        [GtkChild] unowned Gtk.Button empty_trash_button;
-        [GtkChild] unowned Gtk.ListBox notes_list;
-        [GtkChild] unowned Gtk.Label notes_empty;
-        [GtkChild] unowned Gtk.Label title_label;
-        [GtkChild] unowned Gtk.Label subtitle_label;
+        [GtkChild] unowned FileTree file_tree;
+        [GtkChild] unowned Adw.WindowTitle window_title;
         [GtkChild] unowned Gtk.SearchBar find_bar;
         [GtkChild] unowned Gtk.SearchEntry find_entry;
         [GtkChild] unowned Gtk.Label find_count;
-        [GtkChild] unowned Adw.Banner trash_banner;
         [GtkChild] unowned Gtk.Stack content_stack;
+        [GtkChild] unowned Adw.StatusPage empty_page;
+        [GtkChild] unowned Gtk.Button empty_button;
         [GtkChild] unowned Gtk.Paned paned;
         [GtkChild] unowned Gtk.ScrolledWindow editor_scroller;
         [GtkChild] unowned Gtk.ScrolledWindow preview_scroller;
         [GtkChild] unowned Adw.Clamp preview_clamp;
 
-        State state;
-        NoteStore store;
-        Editor editor;
-        Markdown.Renderer? renderer;
-        GtkSource.SearchSettings search_settings;
-        GtkSource.SearchContext search_context;
-
-        SidebarRow all_row;
-        SidebarRow favorites_row;
-        SidebarRow trash_row;
-        Gtk.PopoverMenu notes_menu;
-        Gtk.PopoverMenu folders_menu;
-
-        /* The open document. Notes from the library also have a Note. */
-        File? doc_file;
-        Note? doc_note;
-        string saved_text = "";
-        GenericArray<File> history = new GenericArray<File> ();
-
-        Filter filter = Filter.ALL;
-        string filter_folder = "";
-        Mode mode = Mode.VIEW;
-        bool split;
-        bool loading;
-        bool updating_sidebar;
-        bool moving_document;  // the open file is being renamed/moved by us
-        bool preview_dirty = true;
-        string folders_signature = "";
-        string notes_signature = "";
-        int match_index = -1;
-        uint save_source;
-        uint render_source;
-
         const ActionEntry[] ACTIONS = {
             { "new-note", on_new_note },
             { "new-folder", on_new_folder },
+            { "open-folder", on_open_folder },
             { "open", on_open },
+            { "guide", on_guide },
             { "save", on_save },
             { "go-back", on_go_back },
             { "toggle-mode", on_toggle_mode },
@@ -166,31 +38,55 @@ namespace Notes {
             { "toggle-sidebar", on_toggle_sidebar },
             { "rename-note", on_rename_current },
             { "trash-note", on_trash_current },
-            { "restore-current", on_restore_current },
             { "copy-markdown", on_copy_markdown },
             { "save-copy", on_save_copy },
             { "show-in-files", on_show_in_files },
-            { "choose-library", on_choose_library },
-            { "empty-trash", on_empty_trash },
-            { "note-favorite", on_note_favorite, "s" },
-            { "note-move", on_note_move, "(ss)" },
-            { "note-rename", on_note_rename, "s" },
-            { "note-trash", on_note_trash, "s" },
-            { "note-restore", on_note_restore, "s" },
-            { "note-delete", on_note_delete, "s" },
-            { "folder-rename", on_folder_rename, "s" },
-            { "folder-delete", on_folder_delete, "s" },
+            { "new-note-in", on_new_note_in, "s" },
+            { "new-folder-in", on_new_folder_in, "s" },
+            { "file-rename", on_file_rename, "s" },
+            { "file-show", on_file_show, "s" },
+            { "file-trash", on_file_trash, "s" },
             { "mode", null, "s", "'view'", on_mode_changed },
             { "split", null, null, "false", on_split_changed },
-            { "favorite", null, null, "false", on_favorite_changed },
         };
+
+        const string GUIDE_URI = "resource:///org/example/Notes/guide.md";
+
+        State state;
+        Editor editor;
+        Markdown.Renderer? renderer;
+        GtkSource.SearchSettings search_settings;
+        GtkSource.SearchContext search_context;
+
+        /* The folder shown in the sidebar. */
+        File? folder;
+
+        /* The open document. It may live outside `folder`, or be the read-only guide. */
+        File? doc_file;
+        bool doc_read_only;
+        FileMonitor? doc_monitor;
+        string saved_text = "";
+        GenericArray<File> history = new GenericArray<File> ();
+
+        Mode mode = Mode.VIEW;
+        bool split;
+        bool loading;
+        bool preview_dirty = true;
+        int match_index = -1;
+        uint save_source;
+        uint render_source;
+        uint disk_check_source;
+
+        class construct {
+            typeof (FileTree).ensure ();
+        }
 
         public Window (Application app, State state) {
             Object (application: app);
             this.state = state;
 
             setup_editor ();
-            setup_actions ();
+            add_action_entries (ACTIONS, this);
             setup_sidebar ();
             setup_find ();
             setup_drop ();
@@ -204,13 +100,18 @@ namespace Notes {
                 render_preview (true);
             });
 
-            open_library (state.get_string ("library", default_library ()));
-            open_initial_document ();
-        }
-
-        static string default_library () {
-            string docs = Environment.get_user_special_dir (UserDirectory.DOCUMENTS) ?? Environment.get_home_dir ();
-            return Path.build_filename (docs, "Notes");
+            string saved_folder = state.get_string ("folder");
+            if (saved_folder != "" && FileUtils.test (saved_folder, FileTest.IS_DIR)) {
+                open_folder (File.new_for_path (saved_folder));
+            } else {
+                show_folder (null);
+            }
+            string last = state.get_string ("last-file");
+            if (last != "" && FileUtils.test (last, FileTest.EXISTS)) {
+                open_file (File.new_for_path (last), false);
+            } else {
+                close_document ();
+            }
         }
 
         /* ---- Setup ---- */
@@ -227,72 +128,10 @@ namespace Notes {
             });
         }
 
-        void setup_actions () {
-            add_action_entries (ACTIONS, this);
-        }
-
         void setup_sidebar () {
-            all_row = new SidebarRow (Filter.ALL, "", "text-x-generic-symbolic", _("All Notes"), "icon-note");
-            favorites_row = new SidebarRow (Filter.FAVORITES, "", "starred-symbolic", _("Favorites"), "icon-favorite");
-            trash_row = new SidebarRow (Filter.TRASH, "", "user-trash-symbolic", _("Trash"), "icon-trash");
-            collections_list.append (all_row);
-            collections_list.append (favorites_row);
-            collections_list.append (trash_row);
-
-            collections_list.row_selected.connect ((row) => {
-                if (updating_sidebar || row == null) {
-                    return;
-                }
-                updating_sidebar = true;
-                folders_list.unselect_all ();
-                updating_sidebar = false;
-                set_filter (((SidebarRow) row).filter, "");
-            });
-            folders_list.row_selected.connect ((row) => {
-                if (updating_sidebar || row == null) {
-                    return;
-                }
-                updating_sidebar = true;
-                collections_list.unselect_all ();
-                updating_sidebar = false;
-                set_filter (Filter.FOLDER, ((SidebarRow) row).folder);
-            });
-            notes_list.row_selected.connect ((row) => {
-                if (updating_sidebar || row == null) {
-                    return;
-                }
-                open_file (((NoteRow) row).note.file);
-            });
-            search_entry.search_changed.connect (() => refresh_notes (true));
-
-            notes_menu = new Gtk.PopoverMenu.from_model (null);
-            notes_menu.has_arrow = false;
-            notes_menu.halign = Gtk.Align.START;
-            // Parented to the sidebar column: a ListBox would treat it as a row.
-            notes_menu.set_parent (notes_list.get_parent ());
-            var notes_click = new Gtk.GestureClick ();
-            notes_click.button = Gdk.BUTTON_SECONDARY;
-            notes_click.pressed.connect ((n, x, y) => {
-                var row = notes_list.get_row_at_y ((int) y) as NoteRow;
-                if (row != null) {
-                    show_note_menu (row.note, notes_list, x, y);
-                }
-            });
-            notes_list.add_controller (notes_click);
-
-            folders_menu = new Gtk.PopoverMenu.from_model (null);
-            folders_menu.has_arrow = false;
-            folders_menu.halign = Gtk.Align.START;
-            folders_menu.set_parent (notes_list.get_parent ());
-            var folders_click = new Gtk.GestureClick ();
-            folders_click.button = Gdk.BUTTON_SECONDARY;
-            folders_click.pressed.connect ((n, x, y) => {
-                var row = folders_list.get_row_at_y ((int) y) as SidebarRow;
-                if (row != null) {
-                    show_folder_menu (row.folder, folders_list, x, y);
-                }
-            });
-            folders_list.add_controller (folders_click);
+            file_tree.file_activated.connect ((file) => open_file (file));
+            file_tree.context_menu.connect (show_tree_menu);
+            search_entry.search_changed.connect (() => file_tree.search (search_entry.text.strip ()));
         }
 
         void setup_find () {
@@ -324,8 +163,12 @@ namespace Notes {
             drop.drop.connect ((value, x, y) => {
                 var list = (Gdk.FileList) value.get_boxed ();
                 foreach (unowned File file in list.get_files ()) {
+                    if (file.query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY) {
+                        open_folder (file);
+                        return true;
+                    }
                     string? name = file.get_basename ();
-                    if (name != null && NoteStore.is_markdown_name (name)) {
+                    if (name != null && Files.is_markdown_name (name)) {
                         open_file (file);
                         return true;
                     }
@@ -341,14 +184,11 @@ namespace Notes {
                 maximize ();
             }
             split_view.show_sidebar = state.get_bool ("sidebar", true);
-            folders_revealer.reveal_child = state.get_bool ("folders-expanded", true);
-            update_folders_toggle ();
             split = state.get_bool ("split", false);
             mode = state.get_string ("mode", "view") == "edit" ? Mode.EDIT : Mode.VIEW;
-            lookup (("split")).set_state (new Variant.boolean (split));
+            lookup ("split").set_state (new Variant.boolean (split));
             lookup ("mode").set_state (new Variant.string (mode == Mode.EDIT ? "edit" : "view"));
             apply_mode (false);
-            update_actions ();
         }
 
         new SimpleAction lookup (string name) {
@@ -363,307 +203,63 @@ namespace Notes {
             state.set_int ("height", height);
             state.set_bool ("maximized", maximized);
             state.set_bool ("sidebar", split_view.show_sidebar);
-            state.set_bool ("folders-expanded", folders_revealer.reveal_child);
             state.set_bool ("split", split);
             state.set_string ("mode", mode == Mode.EDIT ? "edit" : "view");
-            state.set_string ("last-file", doc_file != null ? doc_file.get_path () : "");
+            state.set_string ("last-file", doc_file != null && !doc_read_only ? doc_file.get_path () : "");
             state.save ();
-            notes_menu.unparent ();
-            folders_menu.unparent ();
             return false;
         }
 
-        /* ---- Library ---- */
+        /* ---- Folder ---- */
 
-        void open_library (string path) {
-            store = new NoteStore (File.new_for_path (path), state.get_list ("favorites"));
-            store.changed.connect (on_store_changed);
-            store.favorites_changed.connect (() => {
-                state.set_list ("favorites", store.favorite_list ());
-                state.save ();
-            });
-
-            if (!state.get_bool ("initialized", false)) {
-                state.set_bool ("initialized", true);
-                state.save ();
-                if (store.notes.length == 0) {
-                    try {
-                        var bytes = resources_lookup_data (Config.RESOURCE_PATH + "/welcome.md", ResourceLookupFlags.NONE);
-                        store.create_note_with (_("Getting Started"), (string) bytes.get_data ());
-                    } catch (Error e) {
-                        warning ("Could not create the welcome note: %s", e.message);
-                    }
-                }
-            }
-            folders_signature = "";
-            notes_signature = "";
-            refresh_sidebar ();
+        public void open_folder (File dir) {
+            show_folder (dir);
+            state.set_string ("folder", dir.get_path ());
+            state.save ();
         }
 
-        void open_initial_document () {
-            string last = state.get_string ("last-file");
-            if (last != "" && FileUtils.test (last, FileTest.EXISTS)) {
-                open_file (File.new_for_path (last), false);
-                return;
-            }
-            var visible = visible_notes ();
-            if (visible.length > 0) {
-                open_file (visible[0].file, false);
-            } else {
-                close_document ();
-            }
-        }
-
-        void on_store_changed () {
-            if (moving_document) {
-                // The window updates the document's location itself.
-            } else if (doc_file != null && !doc_file.query_exists ()) {
-                close_document ();
-                toast (_("The note was moved or deleted"));
-            } else if (doc_file != null) {
-                doc_note = store.find (doc_file);
-                // Pick up changes made by other programs, unless we have unsaved edits.
-                if (doc_note != null && doc_note.content != saved_text && editor.buffer.text == saved_text) {
-                    reload_buffer (doc_note.content);
-                }
-            }
-            refresh_sidebar ();
-            update_header ();
-        }
-
-        /* ---- Sidebar ---- */
-
-        void set_filter (Filter f, string folder) {
-            filter = f;
-            filter_folder = folder;
-            refresh_notes (true);
-        }
-
-        void refresh_sidebar () {
-            int all = 0, favorites = 0, trashed = 0;
-            var per_folder = new HashTable<string, int> (str_hash, str_equal);
-            for (int k = 0; k < store.notes.length; k++) {
-                Note note = store.notes[k];
-                if (note.trashed) {
-                    trashed++;
-                    continue;
-                }
-                all++;
-                if (note.favorite) {
-                    favorites++;
-                }
-                per_folder.insert (note.folder, per_folder.lookup (note.folder) + 1);
-            }
-            all_row.set_count (all);
-            favorites_row.set_count (favorites);
-            trash_row.set_count (trashed);
-
-            var sig = new StringBuilder ();
-            for (int k = 0; k < store.folders.length; k++) {
-                sig.append_printf ("%s:%d/", store.folders[k], per_folder.lookup (store.folders[k]));
-            }
-
-            updating_sidebar = true;
-            if (sig.str != folders_signature) {
-                folders_signature = sig.str;
-                folders_list.remove_all ();
-                for (int k = 0; k < store.folders.length; k++) {
-                    string name = store.folders[k];
-                    var row = new SidebarRow (Filter.FOLDER, name, "folder-symbolic", name, "icon-folder");
-                    row.set_count (per_folder.lookup (name));
-                    folders_list.append (row);
-                }
-            }
-
-            bool folder_exists = false;
-            for (int k = 0; k < store.folders.length; k++) {
-                if (store.folders[k] == filter_folder) {
-                    folder_exists = true;
-                }
-            }
-            if (filter == Filter.FOLDER && !folder_exists) {
-                filter = Filter.ALL;
-            }
-
-            collections_list.unselect_all ();
-            folders_list.unselect_all ();
-            if (filter == Filter.FOLDER) {
-                for (int k = 0;; k++) {
-                    var row = folders_list.get_row_at_index (k) as SidebarRow;
-                    if (row == null) {
-                        break;
-                    }
-                    if (row.folder == filter_folder) {
-                        folders_list.select_row (row);
-                    }
+        void show_folder (File? dir) {
+            folder = dir;
+            search_entry.text = "";
+            file_tree.load (dir);
+            if (dir != null) {
+                sidebar_title.title = dir.get_basename ();
+                sidebar_title.subtitle = Files.pretty_path (dir.get_parent ());
+                sidebar_stack.visible_child_name = "folder";
+                if (doc_file != null) {
+                    file_tree.select_file (doc_file);
                 }
             } else {
-                collections_list.select_row (filter == Filter.ALL ? all_row : filter == Filter.FAVORITES ? favorites_row : trash_row);
+                sidebar_title.title = _("Notes");
+                sidebar_title.subtitle = "";
+                sidebar_stack.visible_child_name = "no-folder";
             }
-            updating_sidebar = false;
-            refresh_notes (false);
+            update_empty_page ();
+            update_actions ();
         }
 
-        string search_query () {
-            return search_entry.text.strip ().casefold ();
-        }
-
-        GenericArray<Note> visible_notes () {
-            var list = new GenericArray<Note> ();
-            string query = search_query ();
-            for (int k = 0; k < store.notes.length; k++) {
-                Note note = store.notes[k];
-                bool keep;
-                if (query != "") {
-                    keep = !note.trashed && (note.title.casefold ().contains (query) || note.content.casefold ().contains (query));
-                } else {
-                    switch (filter) {
-                    case Filter.FAVORITES:
-                        keep = note.favorite;
-                        break;
-                    case Filter.TRASH:
-                        keep = note.trashed;
-                        break;
-                    case Filter.FOLDER:
-                        keep = !note.trashed && note.folder == filter_folder;
-                        break;
-                    default:
-                        keep = !note.trashed;
-                        break;
-                    }
-                }
-                if (keep) {
-                    list.add (note);
-                }
-            }
-            list.sort ((a, b) => b.modified.compare (a.modified));
-            return list;
-        }
-
-        void refresh_notes (bool force) {
-            var list = visible_notes ();
-            bool searching = search_query () != "";
-
-            var sig = new StringBuilder ();
-            for (int k = 0; k < list.length; k++) {
-                Note note = list[k];
-                sig.append_printf ("%s|%s|%s|%s\n", note.file.get_path (), note.title,
-                                   NoteRow.format_date (note.modified), note.favorite ? "*" : "");
-            }
-            if (force || sig.str != notes_signature) {
-                notes_signature = sig.str;
-                updating_sidebar = true;
-                notes_list.remove_all ();
-                for (int k = 0; k < list.length; k++) {
-                    notes_list.append (new NoteRow (list[k]));
-                }
-                updating_sidebar = false;
-            }
-
-            if (searching) {
-                notes_header.label = _("Results");
-            } else if (filter == Filter.FOLDER) {
-                notes_header.label = filter_folder;
-            } else if (filter == Filter.FAVORITES) {
-                notes_header.label = _("Favorites");
-            } else if (filter == Filter.TRASH) {
-                notes_header.label = _("Trash");
-            } else {
-                notes_header.label = _("Notes");
-            }
-            notes_empty.visible = list.length == 0;
-            notes_empty.label = searching ? _("No Results") : filter == Filter.TRASH ? _("Trash is Empty") : _("No Notes");
-            empty_trash_button.visible = filter == Filter.TRASH && !searching && list.length > 0;
-            select_current_note ();
-        }
-
-        void select_current_note () {
-            updating_sidebar = true;
-            Gtk.ListBoxRow? match = null;
-            for (int k = 0;; k++) {
-                var row = notes_list.get_row_at_index (k) as NoteRow;
-                if (row == null) {
-                    break;
-                }
-                if (doc_note != null && row.note == doc_note) {
-                    match = row;
-                    break;
-                }
-            }
-            if (match != null) {
-                notes_list.select_row (match);
-            } else {
-                notes_list.unselect_all ();
-            }
-            updating_sidebar = false;
-        }
-
-        [GtkCallback]
-        void on_folders_toggle () {
-            folders_revealer.reveal_child = !folders_revealer.reveal_child;
-            update_folders_toggle ();
-        }
-
-        void update_folders_toggle () {
-            bool open = folders_revealer.reveal_child;
-            folders_toggle.icon_name = open ? "pan-up-symbolic" : "pan-down-symbolic";
-            folders_toggle.tooltip_text = open ? _("Collapse Folders") : _("Expand Folders");
-        }
-
-        [GtkCallback]
-        void on_show_sidebar () {
-            split_view.show_sidebar = true;
-        }
-
-        void show_note_menu (Note note, Gtk.Widget origin, double x, double y) {
-            string path = note.file.get_path ();
+        void show_tree_menu (File file, bool is_dir, double x, double y) {
+            string path = file.get_path ();
             var menu = new Menu ();
-            if (note.trashed) {
-                menu.append (_("Restore"), Action.print_detailed_name ("win.note-restore", path));
-                menu.append (_("Delete Permanently"), Action.print_detailed_name ("win.note-delete", path));
-            } else {
-                var main = new Menu ();
-                main.append (note.favorite ? _("Remove from Favorites") : _("Add to Favorites"),
-                             Action.print_detailed_name ("win.note-favorite", path));
-                main.append (_("Rename…"), Action.print_detailed_name ("win.note-rename", path));
-
-                var move = new Menu ();
-                if (note.folder != "") {
-                    move.append (_("No Folder"), Action.print_detailed_name ("win.note-move", new Variant ("(ss)", path, "")));
-                }
-                for (int k = 0; k < store.folders.length; k++) {
-                    string folder = store.folders[k];
-                    if (folder != note.folder) {
-                        move.append (folder, Action.print_detailed_name ("win.note-move", new Variant ("(ss)", path, folder)));
-                    }
-                }
-                if (move.get_n_items () > 0) {
-                    main.append_submenu (_("Move To"), move);
-                }
-                menu.append_section (null, main);
-
-                var danger = new Menu ();
-                danger.append (_("Move to Trash"), Action.print_detailed_name ("win.note-trash", path));
-                menu.append_section (null, danger);
+            if (is_dir) {
+                var create = new Menu ();
+                create.append (_("New Note"), Action.print_detailed_name ("win.new-note-in", path));
+                create.append (_("New Folder…"), Action.print_detailed_name ("win.new-folder-in", path));
+                menu.append_section (null, create);
             }
-            popup_menu (notes_menu, menu, origin, x, y);
+            var manage = new Menu ();
+            manage.append (_("Rename…"), Action.print_detailed_name ("win.file-rename", path));
+            manage.append (_("Show in Files"), Action.print_detailed_name ("win.file-show", path));
+            menu.append_section (null, manage);
+            var danger = new Menu ();
+            danger.append (_("Move to Trash"), Action.print_detailed_name ("win.file-trash", path));
+            menu.append_section (null, danger);
+            file_tree.popup_menu (menu, x, y);
         }
 
-        void show_folder_menu (string folder, Gtk.Widget origin, double x, double y) {
-            var menu = new Menu ();
-            menu.append (_("Rename…"), Action.print_detailed_name ("win.folder-rename", folder));
-            menu.append (_("Delete Folder"), Action.print_detailed_name ("win.folder-delete", folder));
-            popup_menu (folders_menu, menu, origin, x, y);
-        }
-
-        static void popup_menu (Gtk.PopoverMenu popover, Menu menu, Gtk.Widget origin, double x, double y) {
-            Graphene.Point point;
-            if (!origin.compute_point (popover.get_parent (), Graphene.Point () { x = (float) x, y = (float) y }, out point)) {
-                return;
-            }
-            popover.menu_model = menu;
-            popover.pointing_to = Gdk.Rectangle () { x = (int) point.x, y = (int) point.y, width = 1, height = 1 };
-            popover.popup ();
+        /* Where new notes and folders go: the folder selected in the sidebar, or the open folder. */
+        File? target_dir () {
+            return file_tree.selected_dir () ?? folder;
         }
 
         /* ---- Documents ---- */
@@ -676,17 +272,9 @@ namespace Notes {
                 return;
             }
 
-            string text;
-            try {
-                uint8[] data;
-                file.load_contents (null, out data, null);
-                text = (string) data;
-            } catch (Error e) {
+            string? text = Files.read_text (file);
+            if (text == null) {
                 toast (_("Could not open “%s”").printf (file.get_basename ()));
-                return;
-            }
-            if (!text.validate ()) {
-                toast (_("“%s” is not a text file").printf (file.get_basename ()));
                 return;
             }
 
@@ -696,17 +284,15 @@ namespace Notes {
             }
 
             doc_file = file;
-            doc_note = store.find (file);
+            doc_read_only = file.get_uri () == GUIDE_URI;
             reload_buffer (text);
             Gtk.TextIter start;
             editor.buffer.get_start_iter (out start);
             editor.buffer.place_cursor (start);
-
-            bool trashed = doc_note != null && doc_note.trashed;
-            editor.editable = !trashed;
-            trash_banner.revealed = trashed;
+            editor.editable = !doc_read_only;
             content_stack.visible_child_name = "document";
             editor_scroller.vadjustment.value = 0;
+            watch_document ();
 
             update_header ();
             update_actions ();
@@ -715,9 +301,10 @@ namespace Notes {
             if (find_bar.search_mode_enabled) {
                 run_find ();
             }
-            select_current_note ();
-            state.set_string ("last-file", file.get_path ());
-
+            file_tree.select_file (doc_read_only ? null : doc_file);
+            if (!doc_read_only) {
+                state.set_string ("last-file", file.get_path ());
+            }
             if (split_view.collapsed) {
                 split_view.show_sidebar = false;
             }
@@ -742,27 +329,24 @@ namespace Notes {
             render_preview (true);
         }
 
-        /* Saves the current document and gives untitled notes a name from their
-         * first line. Returns the document's final location. */
+        /* Saves the current document and names untitled notes after their first
+         * line. Returns the document's final location. */
         File? leave_document () {
             if (doc_file == null) {
                 return null;
             }
             save_now ();
-            if (doc_note != null && !doc_note.trashed
-                && /^Untitled( \d+)?$/.match (NoteStore.stem_of (doc_file.get_basename ()))) {
-                string title = NoteStore.derive_title (saved_text, "");
-                if (title != "") {
+            if (!doc_read_only && Files.is_untitled (Files.stem_of (doc_file.get_basename ()))) {
+                string name = Files.sanitize_name (Files.derive_title (saved_text, ""));
+                if (name != "") {
+                    File target = Files.unique_child (doc_file.get_parent (), name, Files.ext_of (doc_file.get_basename ()));
                     try {
-                        moving_document = true;
-                        File renamed = store.rename_note (doc_note, title);
-                        replace_in_history (doc_file, renamed);
-                        doc_file = renamed;
-                        doc_note = store.find (renamed);
+                        doc_file.move (target, FileCopyFlags.NONE);
+                        replace_in_history (doc_file, target);
+                        doc_file = target;
                     } catch (Error e) {
-                        warning ("Could not rename note: %s", e.message);
+                        warning ("Could not rename %s: %s", doc_file.get_basename (), e.message);
                     }
-                    moving_document = false;
                 }
             }
             return doc_file;
@@ -777,61 +361,125 @@ namespace Notes {
         }
 
         void close_document () {
+            if (doc_monitor != null) {
+                doc_monitor.cancel ();
+                doc_monitor = null;
+            }
             doc_file = null;
-            doc_note = null;
+            doc_read_only = false;
             loading = true;
             editor.buffer.text = "";
             loading = false;
             saved_text = "";
             preview_clamp.child = null;
             renderer = null;
-            trash_banner.revealed = false;
             content_stack.visible_child_name = "empty";
             update_header ();
             update_actions ();
-            select_current_note ();
+            update_empty_page ();
+            file_tree.select_file (null);
+        }
+
+        /* Notice when another program changes, moves or deletes the open file. */
+        void watch_document () {
+            if (doc_monitor != null) {
+                doc_monitor.cancel ();
+                doc_monitor = null;
+            }
+            if (doc_file == null || doc_read_only) {
+                return;
+            }
+            try {
+                doc_monitor = doc_file.monitor_file (FileMonitorFlags.WATCH_MOVES);
+                doc_monitor.changed.connect (() => {
+                    if (disk_check_source != 0) {
+                        Source.remove (disk_check_source);
+                    }
+                    disk_check_source = Timeout.add (250, () => {
+                        disk_check_source = 0;
+                        check_document_on_disk ();
+                        return Source.REMOVE;
+                    });
+                });
+            } catch (Error e) {
+                warning ("Could not watch %s: %s", doc_file.get_basename (), e.message);
+            }
+        }
+
+        void check_document_on_disk () {
+            if (doc_file == null || doc_read_only) {
+                return;
+            }
+            if (!doc_file.query_exists ()) {
+                string name = doc_file.get_basename ();
+                close_document ();
+                toast (_("“%s” was moved or deleted").printf (name));
+                return;
+            }
+            // Pick up changes made elsewhere, unless there are unsaved edits here.
+            string? text = Files.read_text (doc_file);
+            if (text != null && text != saved_text && editor.buffer.text == saved_text) {
+                reload_buffer (text);
+            }
         }
 
         void update_header () {
             if (doc_file == null) {
-                title_label.label = _("Notes");
-                subtitle_label.label = "";
-                subtitle_label.visible = false;
+                window_title.title = folder != null ? folder.get_basename () : _("Notes");
+                window_title.subtitle = "";
                 title = _("Notes");
                 return;
             }
-            string name = doc_note != null ? doc_note.title
-                : NoteStore.derive_title (saved_text, NoteStore.stem_of (doc_file.get_basename ()));
-            title_label.label = name;
-            title = name;
-            subtitle_label.label = pretty_path (doc_file.get_parent ());
-            subtitle_label.visible = true;
+            if (doc_read_only) {
+                window_title.title = _("Markdown Guide");
+                window_title.subtitle = _("Read only");
+            } else {
+                window_title.title = Files.stem_of (doc_file.get_basename ());
+                window_title.subtitle = location_of (doc_file.get_parent ());
+            }
+            title = window_title.title;
         }
 
-        static string pretty_path (File? dir) {
-            if (dir == null) {
-                return "";
+        /* "Folder/Sub" for files in the open folder, a full path otherwise. */
+        string location_of (File? dir) {
+            if (dir != null && folder != null) {
+                if (dir.equal (folder)) {
+                    return folder.get_basename ();
+                }
+                string? rel = folder.get_relative_path (dir);
+                if (rel != null) {
+                    return folder.get_basename () + "/" + rel;
+                }
             }
-            string path = dir.get_path () ?? dir.get_uri ();
-            string home = Environment.get_home_dir ();
-            if (path.has_prefix (home)) {
-                path = "~" + path.substring (home.length);
+            return Files.pretty_path (dir);
+        }
+
+        void update_empty_page () {
+            if (folder == null) {
+                empty_page.title = _("No Folder Open");
+                empty_page.description = _("Open a folder to browse and edit its Markdown files");
+                empty_button.label = _("Open Folder…");
+                empty_button.action_name = "win.open-folder";
+            } else {
+                empty_page.title = _("No File Open");
+                empty_page.description = _("Choose a Markdown file from the sidebar, or start a new one");
+                empty_button.label = _("New Note");
+                empty_button.action_name = "win.new-note";
             }
-            return path;
         }
 
         void update_actions () {
             bool has_doc = doc_file != null;
-            bool in_library = doc_note != null && !doc_note.trashed;
-            lookup ("save").set_enabled (has_doc);
+            bool editable_doc = has_doc && !doc_read_only;
+            lookup ("new-note").set_enabled (folder != null);
+            lookup ("new-folder").set_enabled (folder != null);
+            lookup ("save").set_enabled (editable_doc);
+            lookup ("rename-note").set_enabled (editable_doc);
+            lookup ("trash-note").set_enabled (editable_doc);
+            lookup ("show-in-files").set_enabled (editable_doc);
             lookup ("copy-markdown").set_enabled (has_doc);
             lookup ("save-copy").set_enabled (has_doc);
-            lookup ("show-in-files").set_enabled (has_doc);
             lookup ("find").set_enabled (has_doc);
-            lookup ("rename-note").set_enabled (in_library);
-            lookup ("trash-note").set_enabled (in_library);
-            lookup ("favorite").set_enabled (in_library);
-            lookup ("favorite").set_state (new Variant.boolean (in_library && doc_note.favorite));
             lookup ("go-back").set_enabled (history.length > 0);
         }
 
@@ -851,7 +499,7 @@ namespace Notes {
                 Source.remove (save_source);
                 save_source = 0;
             }
-            if (doc_file == null) {
+            if (doc_file == null || doc_read_only) {
                 return true;
             }
             string text = editor.buffer.text;
@@ -861,11 +509,6 @@ namespace Notes {
             try {
                 doc_file.replace_contents (text.data, null, false, FileCreateFlags.NONE, null);
                 saved_text = text;
-                if (doc_note != null) {
-                    store.note_saved (doc_note, text);
-                    refresh_notes (false);
-                }
-                update_header ();
                 return true;
             } catch (Error e) {
                 toast (_("Could not save: %s").printf (e.message));
@@ -900,7 +543,7 @@ namespace Notes {
             var r = new Markdown.Renderer ();
             r.base_dir = doc_file.get_parent ();
             r.dark = Adw.StyleManager.get_default ().dark;
-            r.read_only = doc_note != null && doc_note.trashed;
+            r.read_only = doc_read_only;
             r.highlight = find_bar.search_mode_enabled ? find_entry.text : "";
             r.link_activated.connect (on_link_activated);
             r.task_toggled.connect (on_task_toggled);
@@ -956,7 +599,7 @@ namespace Notes {
                 target = path.has_prefix ("/") ? File.new_for_path (path) : doc_file.get_parent ().resolve_relative_path (path);
             }
 
-            if (NoteStore.is_markdown_name (target.get_basename ())) {
+            if (Files.is_markdown_name (target.get_basename ())) {
                 open_file (target);
                 if (fragment != "") {
                     Idle.add (() => {
@@ -1079,17 +722,13 @@ namespace Notes {
             update_find_count ();
         }
 
-        bool finding_in_editor () {
-            return editor_scroller.visible && !preview_scroller.visible;
-        }
-
         void update_find_count () {
             if (find_entry.text == "") {
                 find_count.label = "";
                 return;
             }
-            int count = finding_in_editor () ? search_context.occurrences_count
-                : (renderer != null ? renderer.match_count : 0);
+            bool in_editor = editor_scroller.visible && !preview_scroller.visible;
+            int count = in_editor ? search_context.occurrences_count : (renderer != null ? renderer.match_count : 0);
             if (count < 0) {
                 return;  // still counting
             }
@@ -1134,65 +773,108 @@ namespace Notes {
         /* ---- Actions ---- */
 
         void on_new_note () {
-            leave_document ();
-            if (filter == Filter.TRASH || filter == Filter.FAVORITES) {
-                filter = Filter.ALL;
-            }
-            if (search_entry.text != "") {
-                search_entry.text = "";
-            }
-            try {
-                File file = store.create_note (filter == Filter.FOLDER ? filter_folder : "");
-                refresh_sidebar ();
-                open_file (file);
-                activate_action_variant ("win.mode", new Variant.string ("edit"));
-                editor.grab_focus ();
-            } catch (Error e) {
-                toast (_("Could not create the note: %s").printf (e.message));
+            File? dir = target_dir ();
+            if (dir != null) {
+                create_note_in (dir);
             }
         }
 
+        void on_new_note_in (SimpleAction action, Variant? param) {
+            create_note_in (File.new_for_path (param.get_string ()));
+        }
+
+        void create_note_in (File dir) {
+            leave_document ();
+            File file = Files.unique_child (dir, _("Untitled"), ".md");
+            try {
+                file.create (FileCreateFlags.NONE).close ();
+            } catch (Error e) {
+                toast (_("Could not create the note: %s").printf (e.message));
+                return;
+            }
+            open_file (file);
+            activate_action_variant ("win.mode", new Variant.string ("edit"));
+            editor.grab_focus ();
+        }
+
         void on_new_folder () {
+            File? dir = target_dir ();
+            if (dir != null) {
+                create_folder_in (dir);
+            }
+        }
+
+        void on_new_folder_in (SimpleAction action, Variant? param) {
+            create_folder_in (File.new_for_path (param.get_string ()));
+        }
+
+        void create_folder_in (File dir) {
             ask_name.begin (_("New Folder"), "", _("Create"), (obj, res) => {
                 string? name = ask_name.end (res);
                 if (name == null) {
                     return;
                 }
                 try {
-                    store.create_folder (name);
+                    dir.get_child (Files.sanitize_name (name)).make_directory ();
                 } catch (Error e) {
                     toast (_("Could not create the folder: %s").printf (e.message));
                 }
             });
         }
 
-        void on_open () {
-            open_dialog.begin ();
+        void on_open_folder () {
+            open_folder_dialog.begin ();
         }
 
-        async void open_dialog () {
-            var filter = new Gtk.FileFilter ();
-            filter.name = _("Markdown");
-            filter.add_mime_type ("text/markdown");
-            filter.add_suffix ("md");
-            filter.add_suffix ("markdown");
+        async void open_folder_dialog () {
+            var dialog = new Gtk.FileDialog ();
+            dialog.title = _("Open Folder");
+            if (folder != null) {
+                dialog.initial_folder = folder;
+            }
+            try {
+                File dir = yield dialog.select_folder (this, null);
+                open_folder (dir);
+            } catch (Error e) {
+                // Cancelled.
+            }
+        }
+
+        void on_open () {
+            open_file_dialog.begin ();
+        }
+
+        async void open_file_dialog () {
+            var markdown = new Gtk.FileFilter ();
+            markdown.name = _("Markdown");
+            markdown.add_mime_type ("text/markdown");
+            markdown.add_suffix ("md");
+            markdown.add_suffix ("markdown");
             var all = new Gtk.FileFilter ();
             all.name = _("All Files");
             all.add_pattern ("*");
             var filters = new ListStore (typeof (Gtk.FileFilter));
-            filters.append (filter);
+            filters.append (markdown);
             filters.append (all);
 
             var dialog = new Gtk.FileDialog ();
             dialog.title = _("Open Markdown File");
             dialog.filters = filters;
-            dialog.default_filter = filter;
+            dialog.default_filter = markdown;
+            if (folder != null) {
+                dialog.initial_folder = folder;
+            }
             try {
                 File file = yield dialog.open (this, null);
                 open_file (file);
             } catch (Error e) {
                 // Cancelled.
             }
+        }
+
+        void on_guide () {
+            open_file (File.new_for_uri (GUIDE_URI));
+            activate_action_variant ("win.mode", new Variant.string ("view"));
         }
 
         void on_save () {
@@ -1217,106 +899,125 @@ namespace Notes {
             split_view.show_sidebar = !split_view.show_sidebar;
         }
 
-        void on_favorite_changed (SimpleAction action, Variant value) {
-            if (doc_note == null) {
-                return;
-            }
-            action.set_state (value);
-            store.set_favorite (doc_note, value.get_boolean ());
-        }
-
         void on_rename_current () {
-            if (doc_note != null) {
-                rename_note (doc_note);
+            if (doc_file != null && !doc_read_only) {
+                rename_file (doc_file);
             }
         }
 
-        void rename_note (Note note) {
-            save_now ();
-            ask_name.begin (_("Rename Note"), NoteStore.stem_of (note.file.get_basename ()), _("Rename"), (obj, res) => {
-                string? name = ask_name.end (res);
-                if (name == null) {
+        void on_file_rename (SimpleAction action, Variant? param) {
+            rename_file (File.new_for_path (param.get_string ()));
+        }
+
+        void rename_file (File file) {
+            bool is_dir = file.query_file_type (FileQueryInfoFlags.NONE) == FileType.DIRECTORY;
+            string name = file.get_basename ();
+            if (doc_file != null && doc_file.equal (file)) {
+                save_now ();
+            }
+            ask_name.begin (is_dir ? _("Rename Folder") : _("Rename File"), is_dir ? name : Files.stem_of (name),
+                            _("Rename"), (obj, res) => {
+                string? new_name = ask_name.end (res);
+                if (new_name == null) {
                     return;
                 }
-                bool is_current = note == doc_note;
-                moving_document = is_current;
+                string clean = Files.sanitize_name (new_name);
+                if (clean == "") {
+                    toast (_("That name can't be used"));
+                    return;
+                }
                 try {
-                    File old_file = note.file;
-                    File renamed = store.rename_note (note, name);
-                    replace_in_history (old_file, renamed);
-                    if (is_current) {
-                        doc_file = renamed;
-                        doc_note = store.find (renamed);
-                        update_header ();
-                        update_actions ();
-                        select_current_note ();
-                    }
+                    File renamed = file.set_display_name (is_dir ? clean : clean + Files.ext_of (name));
+                    relocate_document (file, renamed);
                 } catch (Error e) {
                     toast (_("Could not rename: %s").printf (e.message));
                 }
-                moving_document = false;
             });
         }
 
-        void on_trash_current () {
-            if (doc_note != null) {
-                trash_note (doc_note);
-            }
-        }
-
-        void trash_note (Note note) {
-            bool is_current = note == doc_note;
-            if (is_current) {
-                save_now ();
-            }
-            moving_document = is_current;
-            try {
-                File trashed = store.trash (note);
-                moving_document = false;
-                if (is_current) {
-                    doc_file = null;
-                    doc_note = null;
-                    var visible = visible_notes ();
-                    if (visible.length > 0) {
-                        open_file (visible[0].file, false);
-                    } else {
-                        close_document ();
-                    }
-                }
-                var t = new Adw.Toast (_("Note moved to the Trash"));
-                t.button_label = _("Undo");
-                t.button_clicked.connect (() => {
-                    Note? n = store.find (trashed);
-                    if (n == null) {
-                        return;
-                    }
-                    try {
-                        open_file (store.restore (n));
-                    } catch (Error e) {
-                        toast (_("Could not restore: %s").printf (e.message));
-                    }
-                });
-                toast_overlay.add_toast (t);
-            } catch (Error e) {
-                moving_document = false;
-                toast (_("Could not move to the Trash: %s").printf (e.message));
-            }
-        }
-
-        void on_restore_current () {
-            if (doc_note == null || !doc_note.trashed) {
+        /* Keeps the open document (and history) pointing at the right place after
+         * it, or a folder containing it, was renamed. */
+        void relocate_document (File old_file, File new_file) {
+            replace_in_history (old_file, new_file);
+            if (doc_file == null) {
                 return;
             }
+            if (doc_file.equal (old_file)) {
+                doc_file = new_file;
+            } else if (doc_file.has_prefix (old_file)) {
+                doc_file = new_file.resolve_relative_path (old_file.get_relative_path (doc_file));
+            } else {
+                return;
+            }
+            watch_document ();
+            update_header ();
+            file_tree.select_file (doc_file);
+        }
+
+        void on_trash_current () {
+            if (doc_file != null && !doc_read_only) {
+                trash_file (doc_file);
+            }
+        }
+
+        void on_file_trash (SimpleAction action, Variant? param) {
+            trash_file (File.new_for_path (param.get_string ()));
+        }
+
+        void trash_file (File file) {
+            bool was_open = doc_file != null && (doc_file.equal (file) || doc_file.has_prefix (file));
+            File? reopen = was_open ? doc_file : null;
+            if (was_open) {
+                save_now ();
+            }
             try {
-                moving_document = true;
-                File restored = store.restore (doc_note);
-                moving_document = false;
-                doc_file = null;
-                doc_note = null;
-                open_file (restored, false);
+                file.trash ();
             } catch (Error e) {
-                moving_document = false;
-                toast (_("Could not restore: %s").printf (e.message));
+                toast (_("Could not move to the Trash: %s").printf (e.message));
+                return;
+            }
+            if (was_open) {
+                close_document ();
+            }
+            var t = new Adw.Toast (_("“%s” moved to the Trash").printf (file.get_basename ()));
+            t.button_label = _("Undo");
+            t.button_clicked.connect (() => restore_from_trash.begin (file, reopen));
+            toast_overlay.add_toast (t);
+        }
+
+        /* Moves the most recently trashed item that came from `original` back. */
+        async void restore_from_trash (File original, File? reopen) {
+            var trash = File.new_for_uri ("trash:///");
+            File? best = null;
+            DateTime? best_date = null;
+            try {
+                var enumerator = yield trash.enumerate_children_async (
+                    "standard::name,trash::orig-path,trash::deletion-date", FileQueryInfoFlags.NONE, Priority.DEFAULT, null);
+                while (true) {
+                    var infos = yield enumerator.next_files_async (64, Priority.DEFAULT, null);
+                    if (infos.length () == 0) {
+                        break;
+                    }
+                    foreach (unowned FileInfo info in infos) {
+                        if (info.get_attribute_byte_string ("trash::orig-path") != original.get_path ()) {
+                            continue;
+                        }
+                        DateTime? date = info.get_deletion_date ();
+                        if (best == null || (date != null && best_date != null && date.compare (best_date) > 0)) {
+                            best = trash.get_child (info.get_name ());
+                            best_date = date;
+                        }
+                    }
+                }
+                if (best == null) {
+                    throw new IOError.NOT_FOUND (_("It is no longer in the Trash"));
+                }
+                best.move (original, FileCopyFlags.NONE);
+                if (reopen != null) {
+                    open_file (reopen, false);
+                }
+            } catch (Error e) {
+                toast (_("Could not restore “%s”: %s").printf (original.get_basename (), e.message));
             }
         }
 
@@ -1339,7 +1040,7 @@ namespace Notes {
             try {
                 File file = yield dialog.save (this, null);
                 file.replace_contents (editor.buffer.text.data, null, false, FileCreateFlags.NONE, null);
-                toast (_("Saved a copy to %s").printf (pretty_path (file.get_parent ())));
+                toast (_("Saved a copy to %s").printf (Files.pretty_path (file.get_parent ())));
             } catch (Gtk.DialogError.DISMISSED e) {
             } catch (Error e) {
                 toast (_("Could not save: %s").printf (e.message));
@@ -1347,206 +1048,13 @@ namespace Notes {
         }
 
         void on_show_in_files () {
-            if (doc_file != null) {
+            if (doc_file != null && !doc_read_only) {
                 new Gtk.FileLauncher (doc_file).open_containing_folder.begin (this, null);
             }
         }
 
-        void on_choose_library () {
-            choose_library.begin ();
-        }
-
-        async void choose_library () {
-            var dialog = new Gtk.FileDialog ();
-            dialog.title = _("Choose Notes Folder");
-            dialog.initial_folder = store.root;
-            try {
-                File folder = yield dialog.select_folder (this, null);
-                leave_document ();
-                close_document ();
-                history = new GenericArray<File> ();
-                state.set_string ("library", folder.get_path ());
-                state.save ();
-                filter = Filter.ALL;
-                open_library (folder.get_path ());
-                open_initial_document ();
-            } catch (Error e) {
-                // Cancelled.
-            }
-        }
-
-        void on_empty_trash () {
-            var dialog = new Adw.AlertDialog (_("Empty Trash?"), _("All notes in the Trash will be permanently deleted."));
-            dialog.add_response ("cancel", _("Cancel"));
-            dialog.add_response ("empty", _("Empty Trash"));
-            dialog.set_response_appearance ("empty", Adw.ResponseAppearance.DESTRUCTIVE);
-            dialog.default_response = "cancel";
-            dialog.response.connect ((response) => {
-                if (response != "empty") {
-                    return;
-                }
-                if (doc_note != null && doc_note.trashed) {
-                    close_document ();
-                }
-                try {
-                    store.empty_trash ();
-                } catch (Error e) {
-                    toast (_("Could not empty the Trash: %s").printf (e.message));
-                }
-            });
-            dialog.present (this);
-        }
-
-        void on_note_favorite (SimpleAction action, Variant? param) {
-            Note? note = store.find_path (param.get_string ());
-            if (note != null) {
-                store.set_favorite (note, !note.favorite);
-                update_actions ();
-            }
-        }
-
-        void on_note_move (SimpleAction action, Variant? param) {
-            string path, folder;
-            param.get ("(ss)", out path, out folder);
-            Note? note = store.find_path (path);
-            if (note == null) {
-                return;
-            }
-            bool is_current = note == doc_note;
-            if (is_current) {
-                save_now ();
-            }
-            moving_document = is_current;
-            try {
-                File moved = store.move_to_folder (note, folder);
-                replace_in_history (note.file, moved);
-                if (is_current) {
-                    doc_file = moved;
-                    doc_note = store.find (moved);
-                    update_header ();
-                    select_current_note ();
-                }
-            } catch (Error e) {
-                toast (_("Could not move the note: %s").printf (e.message));
-            }
-            moving_document = false;
-        }
-
-        void on_note_rename (SimpleAction action, Variant? param) {
-            Note? note = store.find_path (param.get_string ());
-            if (note != null) {
-                rename_note (note);
-            }
-        }
-
-        void on_note_trash (SimpleAction action, Variant? param) {
-            Note? note = store.find_path (param.get_string ());
-            if (note != null) {
-                trash_note (note);
-            }
-        }
-
-        void on_note_restore (SimpleAction action, Variant? param) {
-            Note? note = store.find_path (param.get_string ());
-            if (note == null) {
-                return;
-            }
-            bool is_current = note == doc_note;
-            moving_document = is_current;
-            try {
-                File restored = store.restore (note);
-                moving_document = false;
-                if (is_current) {
-                    doc_file = null;
-                    doc_note = null;
-                    open_file (restored, false);
-                }
-            } catch (Error e) {
-                moving_document = false;
-                toast (_("Could not restore: %s").printf (e.message));
-            }
-        }
-
-        void on_note_delete (SimpleAction action, Variant? param) {
-            Note? note = store.find_path (param.get_string ());
-            if (note == null) {
-                return;
-            }
-            var dialog = new Adw.AlertDialog (_("Delete Permanently?"),
-                                              _("“%s” will be deleted. This cannot be undone.").printf (note.title));
-            dialog.add_response ("cancel", _("Cancel"));
-            dialog.add_response ("delete", _("Delete"));
-            dialog.set_response_appearance ("delete", Adw.ResponseAppearance.DESTRUCTIVE);
-            dialog.default_response = "cancel";
-            dialog.response.connect ((response) => {
-                if (response != "delete") {
-                    return;
-                }
-                if (note == doc_note) {
-                    close_document ();
-                }
-                try {
-                    store.delete_forever (note);
-                } catch (Error e) {
-                    toast (_("Could not delete: %s").printf (e.message));
-                }
-            });
-            dialog.present (this);
-        }
-
-        void on_folder_rename (SimpleAction action, Variant? param) {
-            string folder = param.get_string ();
-            ask_name.begin (_("Rename Folder"), folder, _("Rename"), (obj, res) => {
-                string? name = ask_name.end (res);
-                if (name == null) {
-                    return;
-                }
-                save_now ();
-                bool current_inside = doc_note != null && !doc_note.trashed && doc_note.folder == folder;
-                string doc_name = doc_file != null ? doc_file.get_basename () : "";
-                moving_document = current_inside;
-                try {
-                    store.rename_folder (folder, name);
-                    if (filter == Filter.FOLDER && filter_folder == folder) {
-                        filter_folder = NoteStore.sanitize_name (name);
-                    }
-                    if (current_inside) {
-                        doc_file = store.root.get_child (NoteStore.sanitize_name (name)).get_child (doc_name);
-                        doc_note = store.find (doc_file);
-                        update_header ();
-                    }
-                    folders_signature = "";
-                    refresh_sidebar ();
-                } catch (Error e) {
-                    toast (_("Could not rename the folder: %s").printf (e.message));
-                }
-                moving_document = false;
-            });
-        }
-
-        void on_folder_delete (SimpleAction action, Variant? param) {
-            string folder = param.get_string ();
-            var dialog = new Adw.AlertDialog (_("Delete Folder?"),
-                                              _("The notes in “%s” will be moved to the Trash.").printf (folder));
-            dialog.add_response ("cancel", _("Cancel"));
-            dialog.add_response ("delete", _("Delete"));
-            dialog.set_response_appearance ("delete", Adw.ResponseAppearance.DESTRUCTIVE);
-            dialog.default_response = "cancel";
-            dialog.response.connect ((response) => {
-                if (response != "delete") {
-                    return;
-                }
-                if (doc_note != null && !doc_note.trashed && doc_note.folder == folder) {
-                    save_now ();
-                    close_document ();
-                }
-                try {
-                    store.delete_folder (folder);
-                } catch (Error e) {
-                    toast (_("Could not delete the folder: %s").printf (e.message));
-                }
-            });
-            dialog.present (this);
+        void on_file_show (SimpleAction action, Variant? param) {
+            new Gtk.FileLauncher (File.new_for_path (param.get_string ())).open_containing_folder.begin (this, null);
         }
 
         /* ---- Helpers ---- */

@@ -1,16 +1,18 @@
 # Notes
 
-A native Markdown notebook for GNOME, written in Vala with GTK 4 and libadwaita.
-Markdown is parsed and rendered by the app itself into native widgets: no web
-engine and no HTML library.
+A native Markdown reader and editor for GNOME, written in Vala with GTK 4 and
+libadwaita. Open a folder to browse its Markdown files in the sidebar, then read or
+edit them. Markdown is parsed and rendered by the app itself into native widgets:
+no web engine and no HTML library.
 
 ## Build and run
 
 ```sh
 meson setup build
 ninja -C build
-./build/src/gnome-markdown            # opens your notes library
-./build/src/gnome-markdown file.md    # opens a specific file
+./build/src/gnome-markdown              # reopens the last folder
+./build/src/gnome-markdown ~/notes      # opens a folder
+./build/src/gnome-markdown file.md      # opens a single file
 ```
 
 To add it to your app grid (installs to `~/.local`):
@@ -20,18 +22,20 @@ meson setup build --prefix=$HOME/.local --reconfigure
 ninja -C build install
 ```
 
-## How notes are stored
+## How it works
 
-Notes are plain `.md` files in `~/Documents/Notes` (you can pick another folder from the menu).
-
-- Subfolders of that folder are the sidebar **Folders** (one level deep).
-- **Trash** is the hidden `.trash` folder inside it.
-- Favorites and window state live in `~/.config/org.example.Notes/state.ini`.
-
-Changes are saved automatically shortly after you stop typing, and when you switch
-notes or close the window. This also applies to files opened from outside the
-library. A new note named `Untitled` is renamed after its first line when you
-leave it.
+- **Sidebar:** the open folder as a tree of subfolders and Markdown files (`.md`,
+  `.markdown`). Hidden files are left out. It updates by itself when files change on disk.
+- **Search:** the field at the top of the sidebar finds files by name or content.
+- **Right-click:** a file or folder offers Rename, Show in Files and Move to Trash.
+  On folders it also offers New Note and New Folder.
+- **Trash:** files go to the system trash, with Undo.
+- **Saving:** automatic, shortly after you stop typing, and when you switch files or
+  close the window.
+- **New notes:** they start as `Untitled.md` and are renamed after their first line
+  when you leave them.
+- **State:** the last folder, the last file and the window state are kept in
+  `~/.config/org.example.Notes/state.ini`.
 
 ## Markdown support
 
@@ -41,7 +45,8 @@ CommonMark plus the GitHub extensions:
 - Tables with alignment, task lists (clickable in View mode), strikethrough, bare URLs
 
 A paragraph written directly under the first `#` title, with no blank line in
-between, is shown as a subtitle.
+between, is shown as a subtitle. The **Markdown Guide** in the main menu shows
+everything in action.
 
 ### Supported HTML
 
@@ -68,10 +73,11 @@ HTML comments are hidden. Any other tag is dropped, but the text inside it is ke
 | `src/markdown/inline-parser.vala` | Emphasis, links, code spans, entities, inline HTML |
 | `src/markdown/renderer.vala` | Document tree → GTK widgets |
 | `src/window.blp`, `src/window.vala` | Main window (Blueprint layout + logic) |
-| `src/note-store.vala` | The notes folder, trash, favorites, file monitoring |
+| `src/widgets/file-tree.vala` | Sidebar folder tree and file search |
 | `src/editor.vala` | Source editor with list continuation and shortcuts |
-| `src/app.css` | Styling |
+| `src/files.vala` | File name helpers |
+| `src/app.css` | Styling of rendered Markdown |
 
 The app ID `org.example.Notes` is a placeholder. Change `app_id` and `resource_path` in
-`meson.build`, the prefix in `src/notes.gresource.xml`, the template path in
+`meson.build`, the prefix in `src/notes.gresource.xml`, the resource paths in
 `src/window.vala`, and the icon file name before publishing.

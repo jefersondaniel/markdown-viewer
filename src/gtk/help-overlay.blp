@@ -1,0 +1,101 @@
+using Gtk 4.0;
+
+Gtk.ShortcutsWindow help_overlay {
+  modal: true;
+
+  Gtk.ShortcutsSection {
+    section-name: "shortcuts";
+    max-height: 10;
+
+    Gtk.ShortcutsGroup {
+      title: _("Files");
+
+      Gtk.ShortcutsShortcut {
+        title: _("New Note");
+        action-name: "win.new-note";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Open Folder");
+        action-name: "win.open-folder";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Open File");
+        action-name: "win.open";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Save Now");
+        action-name: "win.save";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Previous File");
+        action-name: "win.go-back";
+      }
+    }
+
+    Gtk.ShortcutsGroup {
+      title: _("View");
+
+      Gtk.ShortcutsShortcut {
+        title: _("Switch Between View and Edit");
+        action-name: "win.toggle-mode";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Side by Side");
+        action-name: "win.split";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Find in Note");
+        action-name: "win.find";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Toggle Sidebar");
+        action-name: "win.toggle-sidebar";
+      }
+    }
+
+    Gtk.ShortcutsGroup {
+      title: _("Editing");
+
+      Gtk.ShortcutsShortcut {
+        title: _("Bold");
+        accelerator: "<Control>b";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Italic");
+        accelerator: "<Control>i";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Link");
+        accelerator: "<Control>k";
+      }
+    }
+
+    Gtk.ShortcutsGroup {
+      title: _("General");
+
+      Gtk.ShortcutsShortcut {
+        title: _("Keyboard Shortcuts");
+        action-name: "win.show-help-overlay";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Close Window");
+        action-name: "window.close";
+      }
+
+      Gtk.ShortcutsShortcut {
+        title: _("Quit");
+        action-name: "app.quit";
+      }
+    }
+  }
+}
