@@ -61,11 +61,54 @@ jobs:
         if: inputs.release-tag
         run: sha256sum markdown-viewer.flatpak > SHA256SUMS
 
+      # GitHub only stores attestations for public repositories (or on GitHub
+      # Enterprise Cloud), so this step waits until the repository is public.
       - name: Attest the build provenance
-        if: inputs.release-tag
+        id: attest
+        if: inputs.release-tag && !github.event.repository.private
         uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
           subject-path: markdown-viewer.flatpak
+
+      - name: Write the release notes
+        if: inputs.release-tag
+        env:
+          ATTESTED: ${{ steps.attest.outcome == 'success' }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          cat > notes.md <<'NOTES'
+
+          ### Install
+
+          Download **markdown-viewer.flatpak** below, then open it with GNOME Software or run:
+
+          ```sh
+          flatpak install --user markdown-viewer.flatpak
+          ```
+
+          Installing needs the [Flathub](https://flathub.org/setup) remote, which provides the GNOME runtime.
+
+          ### Verify
+
+          NOTES
+          if [ "$ATTESTED" = true ]; then
+            cat >> notes.md <<NOTES
+          The bundle was built by GitHub Actions from the tagged source. To check that the
+          file you downloaded is that build, use the [GitHub CLI](https://cli.github.com):
+
+          \`\`\`sh
+          gh attestation verify markdown-viewer.flatpak --repo $REPOSITORY
+          \`\`\`
+
+          NOTES
+          fi
+          cat >> notes.md <<'NOTES'
+          To check that the download is complete, run this next to `SHA256SUMS`:
+
+          ```sh
+          sha256sum -c SHA256SUMS
+          ```
+          NOTES
 
       - name: Attach the bundle to the release
         if: inputs.release-tag
@@ -77,29 +120,4 @@ jobs:
             SHA256SUMS
           fail_on_unmatched_files: true
           append_body: true
-          body: |
-
-            ### Install
-
-            Download **markdown-viewer.flatpak** below, then open it with GNOME Software or run:
-
-            ```sh
-            flatpak install --user markdown-viewer.flatpak
-            ```
-
-            Installing needs the [Flathub](https://flathub.org/setup) remote, which provides the GNOME runtime.
-
-            ### Verify
-
-            The bundle was built by GitHub Actions from the tagged source. To check that the
-            file you downloaded is that build, use the [GitHub CLI](https://cli.github.com):
-
-            ```sh
-            gh attestation verify markdown-viewer.flatpak --repo ${{ github.repository }}
-            ```
-
-            Or compare its checksum with `SHA256SUMS`:
-
-            ```sh
-            sha256sum -c SHA256SUMS
-            ```
+          body_path: notes.md

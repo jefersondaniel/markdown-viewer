@@ -42,7 +42,8 @@ check it, install the [GitHub CLI](https://cli.github.com) and run:
 gh attestation verify markdown-viewer.flatpak --repo jefersondaniel/markdown-viewer
 ```
 
-This fails if the file was changed or built anywhere else. The release also has a
+This fails if the file was changed or built anywhere else. GitHub only keeps attestations
+for public repositories, so releases made while this repository is private don't have one. The release also has a
 `SHA256SUMS` file. Run `sha256sum -c SHA256SUMS` next to the bundle to catch a broken
 download.
 
@@ -132,8 +133,8 @@ Releases are automatic. Commit messages follow
 2. Merging that pull request tags the commit (for example `v0.2.0`) and publishes a GitHub
    release with the changelog.
 3. The [release workflow](.github/workflows/release.yml) then builds the Flatpak from scratch
-   and attaches `markdown-viewer.flatpak` and `SHA256SUMS` to the release, after recording a
-   signed build provenance attestation for the bundle.
+   and attaches `markdown-viewer.flatpak` and `SHA256SUMS` to the release. When the
+   repository is public, it also records a signed build provenance attestation for the bundle.
 
 The [Flatpak workflow](.github/workflows/flatpak.yml) also builds the app for pushes and pull
 requests that change the app or its packaging, to catch build problems early. Changes to
