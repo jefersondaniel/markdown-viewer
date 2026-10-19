@@ -187,7 +187,7 @@ namespace Notes {
             split = state.get_bool ("split", false);
             mode = state.get_string ("mode", "view") == "edit" ? Mode.EDIT : Mode.VIEW;
             lookup ("split").set_state (new Variant.boolean (split));
-            lookup ("mode").set_state (new Variant.string (mode == Mode.EDIT ? "edit" : "view"));
+            sync_mode_buttons ();
             apply_mode (false);
         }
 
@@ -705,7 +705,14 @@ namespace Notes {
         void on_split_changed (SimpleAction action, Variant value) {
             action.set_state (value);
             split = value.get_boolean ();
+            sync_mode_buttons ();
             apply_mode (true);
+        }
+
+        /* In side-by-side mode neither View nor Edit shows as pressed. */
+        void sync_mode_buttons () {
+            string state = split ? "split" : mode == Mode.EDIT ? "edit" : "view";
+            lookup ("mode").set_state (new Variant.string (state));
         }
 
         void on_toggle_mode () {
