@@ -12,6 +12,11 @@ permissions:
   contents: write
   pull-requests: write
 
+# One release run at a time, so two quick pushes can't race on the release PR.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
 jobs:
   release-please:
     name: Release Please
