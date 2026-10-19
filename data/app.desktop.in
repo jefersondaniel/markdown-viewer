@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Notes
+Comment=Write and read Markdown notes
+Exec=gnome-markdown %F
+Icon=@APP_ID@
+Terminal=false
+Type=Application
+Categories=GNOME;GTK;Utility;TextEditor;
+Keywords=markdown;notes;editor;text;
+MimeType=text/markdown;text/x-markdown;
+StartupNotify=true
+DBusActivatable=false

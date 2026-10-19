@@ -1,0 +1,268 @@
+/* ---- Sidebar ---- */
+
+.sidebar-content {
+  padding-bottom: 12px;
+}
+
+.sidebar-search {
+  margin: 0 12px 8px 12px;
+}
+
+.sidebar-section {
+  margin: 14px 10px 2px 18px;
+  min-height: 28px;
+}
+
+.sidebar-section-title {
+  font-size: 0.92em;
+  opacity: 0.6;
+}
+
+.sidebar-section-button {
+  min-height: 24px;
+  min-width: 24px;
+  padding: 0 4px;
+  opacity: 0.7;
+}
+
+.sidebar-count {
+  opacity: 0.5;
+  font-feature-settings: "tnum";
+}
+
+.navigation-sidebar > row {
+  min-height: 36px;
+}
+
+.icon-favorite {
+  color: #f5c211;
+}
+
+.icon-folder {
+  color: @accent_color;
+}
+
+.icon-note,
+.icon-trash {
+  opacity: 0.6;
+}
+
+.notes-list > row.note-row {
+  padding: 8px 10px;
+}
+
+.notes-list > row.note-row:selected {
+  background-color: alpha(@accent_bg_color, 0.16);
+}
+
+.notes-list > row.note-row:selected .icon-note {
+  color: @accent_color;
+  opacity: 1;
+}
+
+.notes-list .icon-note {
+  margin-top: 2px;
+}
+
+.note-row-title {
+  font-weight: 500;
+}
+
+.note-row-date {
+  font-size: 0.85em;
+  opacity: 0.55;
+}
+
+.note-row-star {
+  -gtk-icon-size: 12px;
+}
+
+.notes-empty {
+  margin: 18px;
+}
+
+/* ---- Header ---- */
+
+.note-title {
+  font-weight: bold;
+}
+
+.note-subtitle {
+  font-size: 0.82em;
+  opacity: 0.55;
+}
+
+.mode-switcher {
+  background-color: alpha(currentColor, 0.08);
+  border-radius: 999px;
+  padding: 3px;
+  margin-left: 6px;
+}
+
+.mode-switcher > button {
+  border-radius: 999px;
+  padding: 3px 14px;
+  min-height: 26px;
+  background: none;
+  box-shadow: none;
+  font-weight: 500;
+}
+
+.mode-switcher > button:hover:not(:checked) {
+  background-color: alpha(currentColor, 0.07);
+}
+
+.mode-switcher > button:checked {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+/* ---- Editor ---- */
+
+textview.note-editor {
+  font-size: 11.5pt;
+}
+
+/* ---- Rendered Markdown ---- */
+
+.markdown {
+  font-size: 1.12em;
+}
+
+.markdown label.md-p,
+.markdown label.md-cell-label {
+  line-height: 1.45;
+}
+
+.markdown .md-heading {
+  font-weight: 700;
+}
+
+.markdown .md-h1 {
+  font-size: 2.15em;
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+.markdown .md-h2 {
+  font-size: 1.45em;
+  margin-top: 10px;
+}
+
+.markdown .md-h3 {
+  font-size: 1.2em;
+  margin-top: 6px;
+}
+
+.markdown .md-h4 {
+  font-size: 1.05em;
+}
+
+.markdown .md-h5 {
+  font-size: 1em;
+}
+
+.markdown .md-h6 {
+  font-size: 0.95em;
+  opacity: 0.7;
+}
+
+.markdown .md-lead {
+  font-size: 1.3em;
+  opacity: 0.5;
+}
+
+.markdown .md-blockquote {
+  border-left: 3px solid @accent_bg_color;
+  padding: 2px 0 2px 18px;
+  color: alpha(currentColor, 0.72);
+}
+
+.markdown .md-bullet,
+.markdown .md-number {
+  opacity: 0.85;
+}
+
+.markdown .md-bullet {
+  font-weight: bold;
+}
+
+.markdown .md-number {
+  font-feature-settings: "tnum";
+}
+
+.markdown checkbutton.md-task {
+  padding: 2px 0 0 0;
+  margin-right: 2px;
+}
+
+.markdown .md-hr {
+  margin: 6px 0;
+  min-height: 1px;
+  background-color: alpha(currentColor, 0.12);
+}
+
+.markdown .md-code-block {
+  border-radius: 12px;
+  background-color: alpha(currentColor, 0.045);
+}
+
+.markdown .md-code-block textview,
+.markdown .md-code-block textview text,
+.markdown .md-code-block textview border {
+  background-color: transparent;
+}
+
+.markdown .md-code-block textview,
+.markdown .md-code-gutter {
+  font-family: monospace;
+  font-size: 0.86em;
+}
+
+.markdown .md-code-gutter {
+  opacity: 0.4;
+  font-feature-settings: "tnum";
+}
+
+.markdown .md-code-block .md-copy {
+  opacity: 0.6;
+}
+
+.markdown .md-code-block .md-copy:hover {
+  opacity: 1;
+}
+
+.markdown .md-table {
+  border: 1px solid alpha(currentColor, 0.14);
+  border-radius: 10px;
+}
+
+.markdown .md-cell {
+  padding: 7px 14px;
+  border-bottom: 1px solid alpha(currentColor, 0.1);
+  border-right: 1px solid alpha(currentColor, 0.1);
+}
+
+.markdown .md-cell.md-cell-last-row {
+  border-bottom: none;
+}
+
+.markdown .md-cell.md-cell-last-col {
+  border-right: none;
+}
+
+.markdown .md-cell.md-cell-header {
+  background-color: alpha(currentColor, 0.04);
+  font-weight: bold;
+}
+
+.markdown .md-details > title {
+  font-weight: 600;
+}
+
+.markdown .md-image-missing {
+  padding: 8px 12px;
+  border-radius: 8px;
+  background-color: alpha(currentColor, 0.05);
+  opacity: 0.7;
+}

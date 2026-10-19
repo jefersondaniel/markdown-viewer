@@ -1,0 +1,367 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $NotesWindow: Adw.ApplicationWindow {
+  default-width: 1180;
+  default-height: 820;
+  width-request: 360;
+  height-request: 480;
+  title: _("Notes");
+
+  Adw.Breakpoint {
+    condition ("max-width: 760sp")
+
+    setters {
+      split_view.collapsed: true;
+      open_button.visible: false;
+      find_button.visible: false;
+    }
+  }
+
+  content: Adw.ToastOverlay toast_overlay {
+    child: Adw.OverlaySplitView split_view {
+      min-sidebar-width: 260;
+      max-sidebar-width: 320;
+      sidebar-width-fraction: 0.25;
+
+      sidebar: Adw.ToolbarView {
+        [top]
+        Adw.HeaderBar {
+          title-widget: Adw.WindowTitle {
+            title: _("Notes");
+          };
+
+          [start]
+          Gtk.Button {
+            icon-name: "document-new-symbolic";
+            tooltip-text: _("New Note");
+            action-name: "win.new-note";
+          }
+
+          [end]
+          Gtk.MenuButton {
+            icon-name: "open-menu-symbolic";
+            tooltip-text: _("Main Menu");
+            menu-model: primary_menu;
+            primary: true;
+          }
+        }
+
+        content: Gtk.ScrolledWindow {
+          hscrollbar-policy: never;
+
+          child: Gtk.Box {
+            orientation: vertical;
+
+            styles [
+              "sidebar-content",
+            ]
+
+            Gtk.SearchEntry search_entry {
+              placeholder-text: _("Search notes…");
+
+              styles [
+                "sidebar-search",
+              ]
+            }
+
+            Gtk.ListBox collections_list {
+              styles [
+                "navigation-sidebar",
+              ]
+            }
+
+            Gtk.Box {
+              styles [
+                "sidebar-section",
+              ]
+
+              Gtk.Label {
+                label: _("Folders");
+                xalign: 0;
+                hexpand: true;
+
+                styles [
+                  "caption-heading",
+                  "dim-label",
+                ]
+              }
+
+              Gtk.Button {
+                icon-name: "folder-new-symbolic";
+                tooltip-text: _("New Folder");
+                action-name: "win.new-folder";
+                valign: center;
+
+                styles [
+                  "flat",
+                  "circular",
+                ]
+              }
+
+              Gtk.Button folders_toggle {
+                icon-name: "pan-up-symbolic";
+                tooltip-text: _("Collapse Folders");
+                valign: center;
+                clicked => $on_folders_toggle();
+
+                styles [
+                  "flat",
+                  "circular",
+                ]
+              }
+            }
+
+            Gtk.Revealer folders_revealer {
+              reveal-child: true;
+
+              child: Gtk.ListBox folders_list {
+                styles [
+                  "navigation-sidebar",
+                ]
+              };
+            }
+
+            Gtk.Box {
+              styles [
+                "sidebar-section",
+              ]
+
+              Gtk.Label notes_header {
+                label: _("Notes");
+                xalign: 0;
+                hexpand: true;
+
+                styles [
+                  "caption-heading",
+                  "dim-label",
+                ]
+              }
+
+              Gtk.Button empty_trash_button {
+                label: _("Empty Trash");
+                visible: false;
+                valign: center;
+                action-name: "win.empty-trash";
+
+                styles [
+                  "flat",
+                ]
+              }
+            }
+
+            Gtk.ListBox notes_list {
+              styles [
+                "navigation-sidebar",
+                "notes-list",
+              ]
+            }
+
+            Gtk.Label notes_empty {
+              visible: false;
+              label: _("No Notes");
+
+              styles [
+                "dim-label",
+                "notes-empty",
+              ]
+            }
+          };
+        };
+      };
+
+      content: Adw.ToolbarView {
+        [top]
+        Adw.HeaderBar {
+          title-widget: Adw.WindowTitle window_title {
+            title: _("Notes");
+          };
+
+          [start]
+          Gtk.ToggleButton {
+            icon-name: "sidebar-show-symbolic";
+            tooltip-text: _("Toggle Sidebar");
+            active: bind split_view.show-sidebar bidirectional;
+          }
+
+          [start]
+          Gtk.Button open_button {
+            icon-name: "document-open-symbolic";
+            tooltip-text: _("Open File…");
+            action-name: "win.open";
+          }
+
+          [end]
+          Gtk.MenuButton {
+            icon-name: "view-more-symbolic";
+            tooltip-text: _("Note Menu");
+            menu-model: note_menu;
+          }
+
+          [end]
+          Gtk.ToggleButton find_button {
+            icon-name: "edit-find-symbolic";
+            tooltip-text: _("Find in Note");
+            active: bind find_bar.search-mode-enabled bidirectional;
+          }
+
+          [end]
+          Gtk.Box {
+            styles [
+              "linked",
+            ]
+
+            Gtk.ToggleButton {
+              label: _("View");
+              action-name: "win.mode";
+              action-target: "'view'";
+            }
+
+            Gtk.ToggleButton {
+              label: _("Edit");
+              action-name: "win.mode";
+              action-target: "'edit'";
+            }
+          }
+        }
+
+        [top]
+        Gtk.SearchBar find_bar {
+          child: Adw.Clamp {
+            maximum-size: 520;
+
+            child: Gtk.Box {
+              spacing: 6;
+
+              Gtk.SearchEntry find_entry {
+                placeholder-text: _("Find in note…");
+                hexpand: true;
+                width-chars: 8;
+              }
+
+              Gtk.Label find_count {
+                styles [
+                  "dim-label",
+                  "caption",
+                ]
+              }
+
+              Gtk.Box {
+                styles [
+                  "linked",
+                ]
+
+                Gtk.Button {
+                  icon-name: "go-up-symbolic";
+                  tooltip-text: _("Previous Match");
+                  clicked => $on_find_previous();
+                }
+
+                Gtk.Button {
+                  icon-name: "go-down-symbolic";
+                  tooltip-text: _("Next Match");
+                  clicked => $on_find_next();
+                }
+              }
+            };
+          };
+        }
+
+        [top]
+        Adw.Banner trash_banner {
+          title: _("This note is in the Trash");
+          button-label: _("Restore");
+          action-name: "win.restore-current";
+        }
+
+        content: Gtk.Stack content_stack {
+          transition-type: crossfade;
+
+          Gtk.StackPage {
+            name: "empty";
+
+            child: Adw.StatusPage {
+              icon-name: "text-x-generic-symbolic";
+              title: _("No Note Selected");
+              description: _("Pick a note from the sidebar or start a new one");
+
+              child: Gtk.Button {
+                label: _("New Note");
+                halign: center;
+                action-name: "win.new-note";
+
+                styles [
+                  "pill",
+                  "suggested-action",
+                ]
+              };
+            };
+          }
+
+          Gtk.StackPage {
+            name: "document";
+
+            child: Gtk.Paned paned {
+              shrink-start-child: false;
+              shrink-end-child: false;
+
+              start-child: Gtk.ScrolledWindow editor_scroller {
+                hscrollbar-policy: never;
+                width-request: 160;
+              };
+
+              end-child: Gtk.ScrolledWindow preview_scroller {
+                hscrollbar-policy: never;
+                width-request: 160;
+
+                child: Adw.Clamp preview_clamp {
+                  maximum-size: 860;
+                  tightening-threshold: 640;
+                };
+              };
+            };
+          }
+        };
+      };
+    };
+  };
+}
+
+menu primary_menu {
+  section {
+    item (_("New Note"), "win.new-note")
+    item (_("New Folder…"), "win.new-folder")
+    item (_("Open File…"), "win.open")
+  }
+
+  section {
+    item (_("Change Notes Folder…"), "win.choose-library")
+  }
+
+  section {
+    item (_("Keyboard Shortcuts"), "win.show-help-overlay")
+    item (_("About Notes"), "app.about")
+  }
+}
+
+menu note_menu {
+  section {
+    item (_("Side by Side"), "win.split")
+    item (_("Find…"), "win.find")
+  }
+
+  section {
+    item (_("Favorite"), "win.favorite")
+    item (_("Rename…"), "win.rename-note")
+  }
+
+  section {
+    item (_("Copy Markdown"), "win.copy-markdown")
+    item (_("Save a Copy…"), "win.save-copy")
+    item (_("Show in Files"), "win.show-in-files")
+  }
+
+  section {
+    item (_("Move to Trash"), "win.trash-note")
+  }
+}

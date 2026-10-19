@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/org/example/Notes">
+    <file preprocess="xml-stripblanks">window.ui</file>
+    <file>app.css</file>
+    <file>welcome.md</file>
+    <file alias="icons/scalable/apps/org.example.Notes.svg">../data/icons/org.example.Notes.svg</file>
+  </gresource>
+</gresources>
