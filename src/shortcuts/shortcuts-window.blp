@@ -1,6 +1,6 @@
 using Gtk 4.0;
 
-Gtk.ShortcutsWindow help_overlay {
+Gtk.ShortcutsWindow shortcuts {
   modal: true;
 
   Gtk.ShortcutsSection {
@@ -84,7 +84,7 @@ Gtk.ShortcutsWindow help_overlay {
 
       Gtk.ShortcutsShortcut {
         title: _("Keyboard Shortcuts");
-        action-name: "win.show-help-overlay";
+        action-name: "win.keyboard-shortcuts";
       }
 
       Gtk.ShortcutsShortcut {

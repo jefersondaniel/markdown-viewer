@@ -36,6 +36,7 @@ namespace Notes {
             { "toggle-mode", on_toggle_mode },
             { "find", on_find },
             { "toggle-sidebar", on_toggle_sidebar },
+            { "keyboard-shortcuts", on_keyboard_shortcuts },
             { "rename-note", on_rename_current },
             { "trash-note", on_trash_current },
             { "copy-markdown", on_copy_markdown },
@@ -904,6 +905,17 @@ namespace Notes {
 
         void on_toggle_sidebar () {
             split_view.show_sidebar = !split_view.show_sidebar;
+        }
+
+        void on_keyboard_shortcuts () {
+            var builder = new Gtk.Builder.from_resource (Config.RESOURCE_PATH + "/shortcuts.ui");
+#if ADW_1_8
+            ((Adw.ShortcutsDialog) builder.get_object ("shortcuts")).present (this);
+#else
+            var window = (Gtk.ShortcutsWindow) builder.get_object ("shortcuts");
+            window.transient_for = this;
+            window.present ();
+#endif
         }
 
         void on_rename_current () {

@@ -747,7 +747,9 @@ namespace Markdown {
             } catch (Error e) {
                 // Formats GDK doesn't handle natively (SVG, GIF, WebP...) go through gdk-pixbuf.
                 var pixbuf = new Gdk.Pixbuf.from_stream (new MemoryInputStream.from_bytes (bytes));
-                return Gdk.Texture.for_pixbuf (pixbuf);
+                var format = pixbuf.has_alpha ? Gdk.MemoryFormat.R8G8B8A8 : Gdk.MemoryFormat.R8G8B8;
+                return new Gdk.MemoryTexture (pixbuf.width, pixbuf.height, format,
+                                              pixbuf.read_pixel_bytes (), pixbuf.rowstride);
             }
         }
     }

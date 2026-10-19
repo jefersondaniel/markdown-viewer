@@ -17,8 +17,7 @@ public class Notes.Application : Adw.Application {
 
         var css = new Gtk.CssProvider ();
         css.load_from_resource (Config.RESOURCE_PATH + "/app.css");
-        Gtk.StyleContext.add_provider_for_display (Gdk.Display.get_default (), css,
-                                                   Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
+        add_provider_for_display (Gdk.Display.get_default (), css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1);
 
         var about = new SimpleAction ("about", null);
         about.activate.connect (show_about);
@@ -39,6 +38,7 @@ public class Notes.Application : Adw.Application {
         set_accels_for_action ("win.split", { "<Control>backslash" });
         set_accels_for_action ("win.find", { "<Control>f" });
         set_accels_for_action ("win.toggle-sidebar", { "F9" });
+        set_accels_for_action ("win.keyboard-shortcuts", { "<Control>question" });
         set_accels_for_action ("win.go-back", { "<Alt>Left" });
         set_accels_for_action ("window.close", { "<Control>w" });
         set_accels_for_action ("app.quit", { "<Control>q" });
@@ -81,6 +81,11 @@ public class Notes.Application : Adw.Application {
         about.present (active_window);
     }
 }
+
+/* GTK deprecated the GtkStyleContext class in 4.10 but kept this function as
+ * the way to add app-wide CSS; the Vala binding inherits the class's mark. */
+[CCode (cname = "gtk_style_context_add_provider_for_display", cheader_filename = "gtk/gtk.h")]
+extern void add_provider_for_display (Gdk.Display display, Gtk.StyleProvider provider, uint priority);
 
 int main (string[] args) {
     return new Notes.Application ().run (args);
