@@ -1,12 +1,13 @@
 [Desktop Entry]
-Name=Notes
-Comment=Write and read Markdown notes
+Name=Markdown Viewer
+Comment=Read and edit Markdown files
 Exec=gnome-markdown %F
 Icon=@APP_ID@
 Terminal=false
 Type=Application
 Categories=GNOME;GTK;Utility;TextEditor;
-Keywords=markdown;notes;editor;text;
+# Translators: search terms to find this application. Don't translate or localize the semicolons.
+Keywords=markdown;md;notes;reader;viewer;editor;text;
 MimeType=text/markdown;text/x-markdown;
 StartupNotify=true
 DBusActivatable=false

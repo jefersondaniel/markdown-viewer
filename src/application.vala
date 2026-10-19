@@ -40,6 +40,9 @@ public class Notes.Application : Adw.Application {
         set_accels_for_action ("win.toggle-sidebar", { "F9" });
         set_accels_for_action ("win.keyboard-shortcuts", { "<Control>question" });
         set_accels_for_action ("win.go-back", { "<Alt>Left" });
+        set_accels_for_action ("win.zoom-in", { "<Control>plus", "<Control>equal", "<Control>KP_Add" });
+        set_accels_for_action ("win.zoom-out", { "<Control>minus", "<Control>KP_Subtract" });
+        set_accels_for_action ("win.zoom-reset", { "<Control>0", "<Control>KP_0" });
         set_accels_for_action ("window.close", { "<Control>w" });
         set_accels_for_action ("app.quit", { "<Control>q" });
     }
@@ -70,7 +73,7 @@ public class Notes.Application : Adw.Application {
 
     void show_about () {
         var about = new Adw.AboutDialog ();
-        about.application_name = _("Notes");
+        about.application_name = _("Markdown Viewer");
         about.application_icon = Config.APP_ID;
         about.version = Config.VERSION;
         about.comments = _("Browse, read and write Markdown files");

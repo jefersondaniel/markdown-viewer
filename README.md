@@ -1,4 +1,4 @@
-# Notes
+# Markdown Viewer
 
 A native Markdown reader and editor for GNOME, written in Vala with GTK 4 and
 libadwaita. Open a folder to browse its Markdown files in the sidebar, then read or
@@ -59,7 +59,9 @@ ninja -C build install
   close the window.
 - **New notes:** they start as `Untitled.md` and are renamed after their first line
   when you leave them.
-- **State:** the last folder, the last file and the window state are kept in
+- **Text size:** Ctrl+Plus and Ctrl+Minus (or Ctrl and the scroll wheel) zoom the note from 80% to
+  200%, and Ctrl+0 resets it. The note menu has the same controls.
+- **State:** the last folder, the last file, the text size and the window state are kept in
   `~/.config/io.github.jefersondaniel.MarkdownViewer/state.ini`.
 
 ## Markdown support

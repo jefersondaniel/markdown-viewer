@@ -1,6 +1,6 @@
 # Agent guide
 
-Notes is a GNOME Markdown reader and editor written in Vala with GTK 4, libadwaita and
+Markdown Viewer is a GNOME Markdown reader and editor written in Vala with GTK 4, libadwaita and
 GtkSourceView. See the README for what it does and how the code is organized.
 
 ## Build and test
