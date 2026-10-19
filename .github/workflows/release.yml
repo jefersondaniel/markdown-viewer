@@ -40,5 +40,8 @@ jobs:
     uses: ./.github/workflows/flatpak.yml
     with:
       release-tag: ${{ needs.release-please.outputs.tag-name }}
+    # The Flatpak job needs these to sign and store the provenance attestation.
     permissions:
       contents: write
+      id-token: write
+      attestations: write
