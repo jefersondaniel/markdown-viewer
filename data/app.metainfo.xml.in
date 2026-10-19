@@ -16,6 +16,7 @@
       <li>Markdown is shown with native widgets, without a web engine</li>
       <li>Tables, task lists, block quotes and code with syntax highlighting</li>
       <li>Edit and preview side by side</li>
+      <li>Adjustable text size</li>
       <li>Find files by name or content in the open folder</li>
       <li>Follows the system light and dark style</li>
     </ul>

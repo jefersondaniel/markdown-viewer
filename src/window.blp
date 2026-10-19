@@ -1,6 +1,53 @@
 using Gtk 4.0;
 using Adw 1;
 
+// The menus come first: GtkBuilder resolves references to objects defined later
+// only at the end, and the zoom row in the note menu needs its menu when it is added.
+menu primary_menu {
+  section {
+    item (_("New Note"), "win.new-note")
+    item (_("New Folder…"), "win.new-folder")
+  }
+
+  section {
+    item (_("Open Folder…"), "win.open-folder")
+    item (_("Open File…"), "win.open")
+  }
+
+  section {
+    item (_("Markdown Guide"), "win.guide")
+    item (_("Keyboard Shortcuts"), "win.keyboard-shortcuts")
+    item (_("About Markdown Viewer"), "app.about")
+  }
+}
+
+menu note_menu {
+  section {
+    item {
+      custom: "zoom";
+    }
+  }
+
+  section {
+    item (_("Side by Side"), "win.split")
+    item (_("Find…"), "win.find")
+  }
+
+  section {
+    item (_("Rename…"), "win.rename-note")
+    item (_("Show in Files"), "win.show-in-files")
+  }
+
+  section {
+    item (_("Copy Markdown"), "win.copy-markdown")
+    item (_("Save a Copy…"), "win.save-copy")
+  }
+
+  section {
+    item (_("Move to Trash"), "win.trash-note")
+  }
+}
+
 template $NotesWindow: Adw.ApplicationWindow {
   default-width: 1180;
   default-height: 820;
@@ -117,7 +164,49 @@ template $NotesWindow: Adw.ApplicationWindow {
           Gtk.MenuButton {
             icon-name: "view-more-symbolic";
             tooltip-text: _("Note Menu");
-            menu-model: note_menu;
+
+            popover: Gtk.PopoverMenu {
+              menu-model: note_menu;
+
+              [zoom]
+              Gtk.Box {
+                margin-start: 12;
+                margin-end: 12;
+
+                Gtk.Button {
+                  icon-name: "zoom-out-symbolic";
+                  tooltip-text: _("Zoom Out");
+                  action-name: "win.zoom-out";
+
+                  styles [
+                    "flat",
+                    "circular",
+                  ]
+                }
+
+                Gtk.Button zoom_button {
+                  hexpand: true;
+                  tooltip-text: _("Reset Zoom");
+                  action-name: "win.zoom-reset";
+
+                  styles [
+                    "flat",
+                    "numeric",
+                  ]
+                }
+
+                Gtk.Button {
+                  icon-name: "zoom-in-symbolic";
+                  tooltip-text: _("Zoom In");
+                  action-name: "win.zoom-in";
+
+                  styles [
+                    "flat",
+                    "circular",
+                  ]
+                }
+              }
+            };
           }
 
           [end]
@@ -214,6 +303,11 @@ template $NotesWindow: Adw.ApplicationWindow {
 
             child: Gtk.Paned paned {
               shrink-start-child: false;
+
+              styles [
+                "document",
+              ]
+
               shrink-end-child: false;
 
               start-child: Gtk.ScrolledWindow editor_scroller {
@@ -236,43 +330,4 @@ template $NotesWindow: Adw.ApplicationWindow {
       };
     };
   };
-}
-
-menu primary_menu {
-  section {
-    item (_("New Note"), "win.new-note")
-    item (_("New Folder…"), "win.new-folder")
-  }
-
-  section {
-    item (_("Open Folder…"), "win.open-folder")
-    item (_("Open File…"), "win.open")
-  }
-
-  section {
-    item (_("Markdown Guide"), "win.guide")
-    item (_("Keyboard Shortcuts"), "win.keyboard-shortcuts")
-    item (_("About Markdown Viewer"), "app.about")
-  }
-}
-
-menu note_menu {
-  section {
-    item (_("Side by Side"), "win.split")
-    item (_("Find…"), "win.find")
-  }
-
-  section {
-    item (_("Rename…"), "win.rename-note")
-    item (_("Show in Files"), "win.show-in-files")
-  }
-
-  section {
-    item (_("Copy Markdown"), "win.copy-markdown")
-    item (_("Save a Copy…"), "win.save-copy")
-  }
-
-  section {
-    item (_("Move to Trash"), "win.trash-note")
-  }
 }

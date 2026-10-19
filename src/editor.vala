@@ -4,6 +4,16 @@
 public class Notes.Editor : GtkSource.View {
     const int COLUMN_WIDTH = 760;
 
+    /* The text zoom, which widens the column along with the text. */
+    double _zoom = 1.0;
+    public double zoom {
+        get { return _zoom; }
+        set {
+            _zoom = value;
+            queue_resize ();
+        }
+    }
+
     public GtkSource.Buffer source_buffer {
         get { return (GtkSource.Buffer) buffer; }
     }
@@ -40,7 +50,7 @@ public class Notes.Editor : GtkSource.View {
 
     /* Keep the text in a comfortable reading column, centered in the view. */
     public override void size_allocate (int width, int height, int baseline) {
-        int margin = int.max (24, (width - COLUMN_WIDTH) / 2);
+        int margin = int.max (24, (width - (int) (COLUMN_WIDTH * zoom)) / 2);
         if (left_margin != margin) {
             left_margin = margin;
             right_margin = margin;

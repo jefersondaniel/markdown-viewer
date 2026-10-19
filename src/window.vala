@@ -24,6 +24,7 @@ namespace Notes {
         [GtkChild] unowned Gtk.ScrolledWindow editor_scroller;
         [GtkChild] unowned Gtk.ScrolledWindow preview_scroller;
         [GtkChild] unowned Adw.Clamp preview_clamp;
+        [GtkChild] unowned Gtk.Button zoom_button;
 
         const ActionEntry[] ACTIONS = {
             { "new-note", on_new_note },
@@ -49,7 +50,13 @@ namespace Notes {
             { "file-trash", on_file_trash, "s" },
             { "mode", null, "s", "'view'", on_mode_changed },
             { "split", null, null, "false", on_split_changed },
+            { "zoom-in", on_zoom_in },
+            { "zoom-out", on_zoom_out },
+            { "zoom-reset", on_zoom_reset },
         };
+
+        /* Text sizes offered by Zoom In and Zoom Out, in percent. */
+        const int[] ZOOM_LEVELS = { 80, 90, 100, 110, 120, 135, 150, 175, 200 };
 
         const string GUIDE_URI = "resource:///io/github/jefersondaniel/MarkdownViewer/guide.md";
 
@@ -78,6 +85,12 @@ namespace Notes {
         uint render_source;
         uint disk_check_source;
 
+        int zoom = 100;
+        Gtk.CssProvider zoom_css = new Gtk.CssProvider ();
+        int clamp_size;
+        int clamp_threshold;
+        double zoom_scroll;
+
         class construct {
             typeof (FileTree).ensure ();
         }
@@ -91,6 +104,7 @@ namespace Notes {
             setup_sidebar ();
             setup_find ();
             setup_drop ();
+            setup_zoom ();
             restore_state ();
 
             var style = Adw.StyleManager.get_default ();
@@ -179,6 +193,36 @@ namespace Notes {
             content_stack.add_controller (drop);
         }
 
+        void setup_zoom () {
+            add_provider_for_display (get_display (), zoom_css, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2);
+            clamp_size = preview_clamp.maximum_size;
+            clamp_threshold = preview_clamp.tightening_threshold;
+
+            // Control and the scroll wheel or touchpad zoom too.
+            var scroll = new Gtk.EventControllerScroll (Gtk.EventControllerScrollFlags.VERTICAL);
+            scroll.propagation_phase = Gtk.PropagationPhase.CAPTURE;
+            scroll.scroll_begin.connect (() => zoom_scroll = 0);
+            scroll.scroll.connect ((dx, dy) => {
+                var mods = scroll.get_current_event_state () & Gtk.accelerator_get_default_mod_mask ();
+                if (mods != Gdk.ModifierType.CONTROL_MASK) {
+                    return false;
+                }
+                // A wheel reports steps; a touchpad reports pixels.
+                double step = scroll.get_unit () == Gdk.ScrollUnit.SURFACE ? 40 : 1;
+                zoom_scroll += dy;
+                while (zoom_scroll <= -step) {
+                    zoom_scroll += step;
+                    on_zoom_in ();
+                }
+                while (zoom_scroll >= step) {
+                    zoom_scroll -= step;
+                    on_zoom_out ();
+                }
+                return true;
+            });
+            paned.add_controller (scroll);
+        }
+
         void restore_state () {
             set_default_size (state.get_int ("width", 1180), state.get_int ("height", 820));
             if (state.get_bool ("maximized", false)) {
@@ -187,6 +231,7 @@ namespace Notes {
             split_view.show_sidebar = state.get_bool ("sidebar", true);
             split = state.get_bool ("split", false);
             mode = state.get_string ("mode", "view") == "edit" ? Mode.EDIT : Mode.VIEW;
+            set_zoom (state.get_int ("zoom", 100));
             lookup ("split").set_state (new Variant.boolean (split));
             sync_mode_buttons ();
             apply_mode (false);
@@ -206,6 +251,7 @@ namespace Notes {
             state.set_bool ("sidebar", split_view.show_sidebar);
             state.set_bool ("split", split);
             state.set_string ("mode", mode == Mode.EDIT ? "edit" : "view");
+            state.set_int ("zoom", zoom);
             state.set_string ("last-file", doc_file != null && !doc_read_only ? doc_file.get_path () : "");
             state.save ();
             return false;
@@ -714,6 +760,44 @@ namespace Notes {
         void sync_mode_buttons () {
             string state = split ? "split" : mode == Mode.EDIT ? "edit" : "view";
             lookup ("mode").set_state (new Variant.string (state));
+        }
+
+        /* ---- Zoom ---- */
+
+        /* Scales the text of the editor and the preview. The reading column grows
+         * with it, so lines keep about the same number of words. */
+        void set_zoom (int level) {
+            zoom = level.clamp (ZOOM_LEVELS[0], ZOOM_LEVELS[ZOOM_LEVELS.length - 1]);
+            zoom_css.load_from_string ("paned.document { font-size: %d%%; }".printf (zoom));
+            double scale = zoom / 100.0;
+            preview_clamp.maximum_size = (int) (clamp_size * scale);
+            preview_clamp.tightening_threshold = (int) (clamp_threshold * scale);
+            editor.zoom = scale;
+            zoom_button.label = "%d%%".printf (zoom);
+            lookup ("zoom-in").set_enabled (zoom < ZOOM_LEVELS[ZOOM_LEVELS.length - 1]);
+            lookup ("zoom-out").set_enabled (zoom > ZOOM_LEVELS[0]);
+        }
+
+        void on_zoom_in () {
+            foreach (int level in ZOOM_LEVELS) {
+                if (level > zoom) {
+                    set_zoom (level);
+                    return;
+                }
+            }
+        }
+
+        void on_zoom_out () {
+            for (int i = ZOOM_LEVELS.length - 1; i >= 0; i--) {
+                if (ZOOM_LEVELS[i] < zoom) {
+                    set_zoom (ZOOM_LEVELS[i]);
+                    return;
+                }
+            }
+        }
+
+        void on_zoom_reset () {
+            set_zoom (100);
         }
 
         void on_toggle_mode () {
