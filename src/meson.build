@@ -20,22 +20,18 @@ else
   shortcuts_ui = 'shortcuts/shortcuts-window'
 endif
 
-blueprints = custom_target('blueprints',
-  input: files('window.blp', shortcuts_ui + '.blp'),
-  output: '.',
-  command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
-)
-
-resources_conf = configuration_data()
-resources_conf.set('SHORTCUTS_UI', shortcuts_ui + '.ui')
-resources_xml = configure_file(
-  input: 'notes.gresource.xml.in',
-  output: 'notes.gresource.xml',
-  configuration: resources_conf,
-)
+blueprint_compiler = find_program('blueprint-compiler')
+blueprints = []
+foreach ui : [['window', 'window.blp'], ['shortcuts', shortcuts_ui + '.blp']]
+  blueprints += custom_target(ui[0] + '-ui',
+    input: ui[1],
+    output: ui[0] + '.ui',
+    command: [blueprint_compiler, 'compile', '--output', '@OUTPUT@', '@INPUT@'],
+  )
+endforeach
 
 resources = gnome.compile_resources('notes-resources',
-  resources_xml,
+  'notes.gresource.xml',
   source_dir: [meson.current_build_dir(), meson.current_source_dir()],
   c_name: 'notes',
   dependencies: blueprints,
