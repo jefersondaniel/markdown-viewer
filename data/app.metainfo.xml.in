@@ -34,6 +34,21 @@
   <url type="bugtracker">https://github.com/jefersondaniel/markdown-viewer/issues</url>
   <url type="vcs-browser">https://github.com/jefersondaniel/markdown-viewer</url>
 
+  <screenshots>
+    <screenshot type="default">
+      <image>https://raw.githubusercontent.com/jefersondaniel/markdown-viewer/main/data/screenshots/view.png</image>
+      <caption>A note in View mode, with the folder in the sidebar</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/jefersondaniel/markdown-viewer/main/data/screenshots/side-by-side.png</image>
+      <caption>Edit and preview side by side</caption>
+    </screenshot>
+    <screenshot>
+      <image>https://raw.githubusercontent.com/jefersondaniel/markdown-viewer/main/data/screenshots/dark.png</image>
+      <caption>Dark style</caption>
+    </screenshot>
+  </screenshots>
+
   <content_rating type="oars-1.1" />
 
   <requires>
