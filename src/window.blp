@@ -34,8 +34,22 @@ menu note_menu {
   }
 
   section {
-    item (_("Rename…"), "win.rename-note")
-    item (_("Show in Files"), "win.show-in-files")
+    item {
+      label: _("Save…");
+      action: "win.save-draft";
+      accel: "<Control>s";
+      hidden-when: "action-disabled";
+    }
+    item {
+      label: _("Rename…");
+      action: "win.rename-note";
+      hidden-when: "action-disabled";
+    }
+    item {
+      label: _("Show in Files");
+      action: "win.show-in-files";
+      hidden-when: "action-disabled";
+    }
   }
 
   section {
@@ -44,7 +58,16 @@ menu note_menu {
   }
 
   section {
-    item (_("Move to Trash"), "win.trash-note")
+    item {
+      label: _("Discard");
+      action: "win.discard-draft";
+      hidden-when: "action-disabled";
+    }
+    item {
+      label: _("Move to Trash");
+      action: "win.trash-note";
+      hidden-when: "action-disabled";
+    }
   }
 }
 
