@@ -11,6 +11,7 @@ on:
     branches: [main]
     paths: &app-paths
       - "src/**"
+      - "subprojects/**"
       - "data/**"
       - "!data/screenshots/**"
       - "meson.build"
