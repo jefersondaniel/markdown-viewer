@@ -33,6 +33,8 @@ namespace Notes {
             { "open", on_open },
             { "guide", on_guide },
             { "save", on_save },
+            { "save-draft", on_save },
+            { "discard-draft", on_discard_draft },
             { "go-back", on_go_back },
             { "toggle-mode", on_toggle_mode },
             { "find", on_find },
@@ -63,6 +65,8 @@ namespace Notes {
         State state;
         Editor editor;
         Markdown.Renderer? renderer;
+        Gtk.Overlay preview_overlay = new Gtk.Overlay ();
+        TextSelection selection;
         GtkSource.SearchSettings search_settings;
         GtkSource.SearchContext search_context;
 
@@ -72,6 +76,12 @@ namespace Notes {
         /* The open document. It may live outside `folder`, or be the read-only guide. */
         File? doc_file;
         bool doc_read_only;
+
+        /* A new note that exists only in memory until it is saved. `doc_file` is
+         * null meanwhile, and `draft_dir` is where saving it suggests. */
+        bool draft;
+        File? draft_dir;
+        bool close_confirmed;
         FileMonitor? doc_monitor;
         string saved_text = "";
         GenericArray<File> history = new GenericArray<File> ();
@@ -100,6 +110,7 @@ namespace Notes {
             this.state = state;
 
             setup_editor ();
+            setup_preview ();
             add_action_entries (ACTIONS, this);
             setup_sidebar ();
             setup_find ();
@@ -141,6 +152,11 @@ namespace Notes {
                 schedule_save ();
                 schedule_render ();
             });
+        }
+
+        void setup_preview () {
+            preview_clamp.child = preview_overlay;
+            selection = new TextSelection (preview_overlay, preview_scroller);
         }
 
         void setup_sidebar () {
@@ -242,6 +258,15 @@ namespace Notes {
         }
 
         protected override bool close_request () {
+            if (!close_confirmed && unsaved_draft ()) {
+                confirm_leave_draft.begin ((obj, res) => {
+                    if (confirm_leave_draft.end (res)) {
+                        close_confirmed = true;
+                        close ();
+                    }
+                });
+                return true;
+            }
             leave_document ();
             int width, height;
             get_default_size (out width, out height);
@@ -319,6 +344,17 @@ namespace Notes {
                 return;
             }
 
+            if (unsaved_draft ()) {
+                confirm_leave_draft.begin ((obj, res) => {
+                    if (confirm_leave_draft.end (res)) {
+                        open_file (file, push_history);
+                    } else {
+                        file_tree.select_file (doc_file);
+                    }
+                });
+                return;
+            }
+
             string? text = Files.read_text (file);
             if (text == null) {
                 toast (_("Could not open “%s”").printf (file.get_basename ()));
@@ -332,6 +368,7 @@ namespace Notes {
 
             doc_file = file;
             doc_read_only = file.get_uri () == GUIDE_URI;
+            draft = false;
             reload_buffer (text);
             Gtk.TextIter start;
             editor.buffer.get_start_iter (out start);
@@ -376,26 +413,9 @@ namespace Notes {
             render_preview (true);
         }
 
-        /* Saves the current document and names untitled notes after their first
-         * line. Returns the document's final location. */
+        /* Saves the current document and returns it, or null for a draft. */
         File? leave_document () {
-            if (doc_file == null) {
-                return null;
-            }
             save_now ();
-            if (!doc_read_only && Files.is_untitled (Files.stem_of (doc_file.get_basename ()))) {
-                string name = Files.sanitize_name (Files.derive_title (saved_text, ""));
-                if (name != "") {
-                    File target = Files.unique_child (doc_file.get_parent (), name, Files.ext_of (doc_file.get_basename ()));
-                    try {
-                        doc_file.move (target, FileCopyFlags.NONE);
-                        replace_in_history (doc_file, target);
-                        doc_file = target;
-                    } catch (Error e) {
-                        warning ("Could not rename %s: %s", doc_file.get_basename (), e.message);
-                    }
-                }
-            }
             return doc_file;
         }
 
@@ -414,11 +434,13 @@ namespace Notes {
             }
             doc_file = null;
             doc_read_only = false;
+            draft = false;
             loading = true;
             editor.buffer.text = "";
             loading = false;
             saved_text = "";
-            preview_clamp.child = null;
+            preview_overlay.child = null;
+            selection.set_segments (null);
             renderer = null;
             content_stack.visible_child_name = "empty";
             update_header ();
@@ -471,6 +493,12 @@ namespace Notes {
         }
 
         void update_header () {
+            if (draft) {
+                window_title.title = _("New Note");
+                window_title.subtitle = _("Draft");
+                title = window_title.title;
+                return;
+            }
             if (doc_file == null) {
                 window_title.title = folder != null ? folder.get_basename () : _("Markdown Viewer");
                 window_title.subtitle = "";
@@ -516,11 +544,12 @@ namespace Notes {
         }
 
         void update_actions () {
-            bool has_doc = doc_file != null;
-            bool editable_doc = has_doc && !doc_read_only;
-            lookup ("new-note").set_enabled (folder != null);
+            bool has_doc = has_document ();
+            bool editable_doc = doc_file != null && !doc_read_only;
             lookup ("new-folder").set_enabled (folder != null);
-            lookup ("save").set_enabled (editable_doc);
+            lookup ("save").set_enabled (editable_doc || draft);
+            lookup ("save-draft").set_enabled (draft);
+            lookup ("discard-draft").set_enabled (draft);
             lookup ("rename-note").set_enabled (editable_doc);
             lookup ("trash-note").set_enabled (editable_doc);
             lookup ("show-in-files").set_enabled (editable_doc);
@@ -528,6 +557,20 @@ namespace Notes {
             lookup ("save-copy").set_enabled (has_doc);
             lookup ("find").set_enabled (has_doc);
             lookup ("go-back").set_enabled (history.length > 0);
+        }
+
+        bool has_document () {
+            return doc_file != null || draft;
+        }
+
+        /* A draft with something in it, which would be lost on leaving it. */
+        bool unsaved_draft () {
+            return draft && editor.buffer.text.strip () != "";
+        }
+
+        /* The folder that relative links and images in the document point into. */
+        File? doc_dir () {
+            return doc_file != null ? doc_file.get_parent () : draft_dir;
         }
 
         void schedule_save () {
@@ -581,14 +624,14 @@ namespace Notes {
         }
 
         void render_preview (bool keep_scroll) {
-            if (doc_file == null || !preview_scroller.visible || !preview_dirty) {
+            if (!has_document () || !preview_scroller.visible || !preview_dirty) {
                 return;
             }
             preview_dirty = false;
 
             var doc = new Markdown.Parser ().parse (editor.buffer.text);
             var r = new Markdown.Renderer ();
-            r.base_dir = doc_file.get_parent ();
+            r.base_dir = doc_dir ();
             r.dark = Adw.StyleManager.get_default ().dark;
             r.read_only = doc_read_only;
             r.highlight = find_bar.search_mode_enabled ? find_entry.text : "";
@@ -603,7 +646,8 @@ namespace Notes {
 
             var adj = preview_scroller.vadjustment;
             double position = adj.value;
-            preview_clamp.child = content;
+            preview_overlay.child = content;
+            selection.set_segments (r.segments);
             renderer = r;
             match_index = -1;
 
@@ -643,7 +687,8 @@ namespace Notes {
                 target = File.new_for_uri (path);
             } else {
                 path = Uri.unescape_string (path) ?? path;
-                target = path.has_prefix ("/") ? File.new_for_path (path) : doc_file.get_parent ().resolve_relative_path (path);
+                File? dir = doc_dir ();
+                target = path.has_prefix ("/") || dir == null ? File.new_for_path (path) : dir.resolve_relative_path (path);
             }
 
             if (Files.is_markdown_name (target.get_basename ())) {
@@ -730,7 +775,7 @@ namespace Notes {
                 paned.position = width > 0 ? width / 2 : 560;
             }
             render_preview (true);
-            if (focus && editor_scroller.visible && doc_file != null) {
+            if (focus && editor_scroller.visible && has_document ()) {
                 editor.grab_focus ();
             }
             if (find_bar.search_mode_enabled) {
@@ -865,28 +910,136 @@ namespace Notes {
         /* ---- Actions ---- */
 
         void on_new_note () {
-            File? dir = target_dir ();
-            if (dir != null) {
-                create_note_in (dir);
-            }
+            start_draft (target_dir ());
         }
 
         void on_new_note_in (SimpleAction action, Variant? param) {
-            create_note_in (File.new_for_path (param.get_string ()));
+            start_draft (File.new_for_path (param.get_string ()));
         }
 
-        void create_note_in (File dir) {
-            leave_document ();
-            File file = Files.unique_child (dir, _("Untitled"), ".md");
-            try {
-                file.create (FileCreateFlags.NONE).close ();
-            } catch (Error e) {
-                toast (_("Could not create the note: %s").printf (e.message));
+        /* Opens a new, unsaved note. Nothing is written until it is saved. */
+        void start_draft (File? dir, string text = "") {
+            if (unsaved_draft ()) {
+                confirm_leave_draft.begin ((obj, res) => {
+                    if (confirm_leave_draft.end (res)) {
+                        start_draft (dir, text);
+                    }
+                });
                 return;
             }
-            open_file (file);
+            File? previous = leave_document ();
+            if (previous != null) {
+                history.add (previous);
+            }
+            if (doc_monitor != null) {
+                doc_monitor.cancel ();
+                doc_monitor = null;
+            }
+            doc_file = null;
+            doc_read_only = false;
+            draft = true;
+            draft_dir = dir;
+            reload_buffer (text);
+            editor.editable = true;
+            content_stack.visible_child_name = "document";
+            editor_scroller.vadjustment.value = 0;
+            update_header ();
+            update_actions ();
+            file_tree.select_file (null);
+            if (split_view.collapsed) {
+                split_view.show_sidebar = false;
+            }
             activate_action_variant ("win.mode", new Variant.string ("edit"));
             editor.grab_focus ();
+        }
+
+        /* Asks what to do with a draft that is about to be left. Returns false to
+         * stay on it. */
+        async bool confirm_leave_draft () {
+            var dialog = new Adw.AlertDialog (_("Save the New Note?"),
+                                              _("The note hasn't been saved yet. If you don't save it, its text will be lost."));
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("discard", _("_Discard"));
+            dialog.add_response ("save", _("_Save…"));
+            dialog.set_response_appearance ("discard", Adw.ResponseAppearance.DESTRUCTIVE);
+            dialog.set_response_appearance ("save", Adw.ResponseAppearance.SUGGESTED);
+            dialog.default_response = "save";
+            dialog.close_response = "cancel";
+
+            switch (yield dialog.choose (this, null)) {
+            case "save":
+                return yield save_draft ();
+            case "discard":
+                draft = false;
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        /* Asks where to save the draft and turns it into a regular document. */
+        async bool save_draft () {
+            string text = editor.buffer.text;
+            string name = Files.sanitize_name (Files.derive_title (text, ""));
+            var dialog = new Gtk.FileDialog ();
+            dialog.title = _("Save Note");
+            if (name == "") {
+                name = _("Untitled");
+            }
+            File? dir = draft_dir ?? folder;
+            if (dir != null) {
+                dialog.initial_folder = dir;
+                name = Files.stem_of (Files.unique_child (dir, name, ".md").get_basename ());
+            }
+            dialog.initial_name = name + ".md";
+            File file;
+            try {
+                file = yield dialog.save (this, null);
+            } catch (Error e) {
+                return false;  // cancelled
+            }
+            string? base_name = file.get_basename ();
+            if (base_name != null && !base_name.contains (".")) {
+                file = file.get_parent ().get_child (base_name + ".md");
+            }
+            try {
+                file.replace_contents (text.data, null, false, FileCreateFlags.NONE, null);
+            } catch (Error e) {
+                toast (_("Could not save: %s").printf (e.message));
+                return false;
+            }
+            if (!draft) {
+                return true;  // the draft was left while the dialog was open
+            }
+            draft = false;
+            doc_file = file;
+            saved_text = text;
+            watch_document ();
+            update_header ();
+            update_actions ();
+            file_tree.select_file (doc_file);
+            state.set_string ("last-file", file.get_path ());
+            // Edits made while the dialog was open are saved as usual.
+            schedule_save ();
+            preview_dirty = true;
+            render_preview (true);
+            return true;
+        }
+
+        void on_discard_draft () {
+            if (!draft) {
+                return;
+            }
+            string text = editor.buffer.text;
+            File? dir = draft_dir;
+            close_document ();
+            if (text.strip () == "") {
+                return;
+            }
+            var t = new Adw.Toast (_("Note discarded"));
+            t.button_label = _("Undo");
+            t.button_clicked.connect (() => start_draft (dir, text));
+            toast_overlay.add_toast (t);
         }
 
         void on_new_folder () {
@@ -970,6 +1123,14 @@ namespace Notes {
         }
 
         void on_save () {
+            if (draft) {
+                save_draft.begin ((obj, res) => {
+                    if (save_draft.end (res)) {
+                        toast (_("Saved"));
+                    }
+                });
+                return;
+            }
             if (save_now ()) {
                 toast (_("Saved"));
             }
@@ -1134,12 +1295,12 @@ namespace Notes {
         }
 
         async void save_copy () {
-            if (doc_file == null) {
+            if (!has_document ()) {
                 return;
             }
             var dialog = new Gtk.FileDialog ();
             dialog.title = _("Save a Copy");
-            dialog.initial_name = doc_file.get_basename ();
+            dialog.initial_name = doc_file != null ? doc_file.get_basename () : _("Untitled") + ".md";
             try {
                 File file = yield dialog.save (this, null);
                 file.replace_contents (editor.buffer.text.data, null, false, FileCreateFlags.NONE, null);

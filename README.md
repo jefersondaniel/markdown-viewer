@@ -57,8 +57,14 @@ ninja -C build install
 - **Trash:** files go to the system trash, with Undo.
 - **Saving:** automatic, shortly after you stop typing, and when you switch files or
   close the window.
-- **New notes:** they start as `Untitled.md` and are renamed after their first line
-  when you leave them.
+- **New notes:** they start as drafts that exist only in the app. Ctrl+S, or Save… in
+  the note menu, asks for a name and a folder (the first line is suggested). Leaving a
+  draft that has text asks whether to save or discard it, and Discard in the note menu
+  drops it, with Undo.
+- **Selecting text:** in View mode a selection can run across paragraphs, lists, code
+  and tables, scrolling when you drag past the edge. Double-click selects a word,
+  triple-click a paragraph and Ctrl+A the whole note. Ctrl+C or the right-click menu
+  copies it as plain text.
 - **Text size:** Ctrl+Plus and Ctrl+Minus (or Ctrl and the scroll wheel) zoom the note from 80% to
   200%, and Ctrl+0 resets it. The note menu has the same controls.
 - **State:** the last folder, the last file, the text size and the window state are kept in

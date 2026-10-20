@@ -12,6 +12,16 @@ textview.note-editor {
 
 /* ---- Rendered Markdown ---- */
 
+/* Selected text in the preview, drawn by Notes.TextSelection. Matches the
+ * selection of other text, in the accent color while the note has focus. */
+.text-selection {
+  color: color-mix(in srgb, var(--view-fg-color) 10%, transparent);
+}
+
+overlay:focus-within > .text-selection {
+  color: color-mix(in srgb, var(--accent-bg-color) 30%, transparent);
+}
+
 .markdown {
   font-size: 1.12em;
 }

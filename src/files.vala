@@ -18,24 +18,6 @@ namespace Notes.Files {
         return dot > 0 ? name.substring (dot) : ".md";
     }
 
-    /* "Untitled", "Untitled 2", ...: names given to new notes. */
-    public bool is_untitled (string stem) {
-        string base_name = _("Untitled");
-        if (stem == base_name) {
-            return true;
-        }
-        if (!stem.has_prefix (base_name + " ")) {
-            return false;
-        }
-        string rest = stem.substring (base_name.length + 1);
-        for (int k = 0; k < rest.length; k++) {
-            if (!rest[k].isdigit ()) {
-                return false;
-            }
-        }
-        return rest.length > 0;
-    }
-
     /* Makes `name` safe to use as a file name. */
     public string sanitize_name (string name) {
         var sb = new StringBuilder ();

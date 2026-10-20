@@ -19,10 +19,19 @@ namespace Markdown {
         public int match_count { get; private set; }
         public GenericArray<Gtk.Widget> match_widgets = new GenericArray<Gtk.Widget> ();
 
+        /* The selectable text of the note, in reading order. */
+        public GenericArray<Notes.TextSegment> segments = new GenericArray<Notes.TextSegment> ();
+
         HashTable<string, Gtk.Widget> anchors = new HashTable<string, Gtk.Widget> (str_hash, str_equal);
         HashTable<string, int> slug_counts = new HashTable<string, int> (str_hash, str_equal);
         Regex? highlight_re;
         bool label_matched;
+
+        /* How copied text joins the next segment to the one before: blocks are
+         * separated by a blank line, list items by a line break, table cells
+         * by a tab. `next_separator` overrides it for one segment. */
+        string block_separator = "\n\n";
+        string? next_separator;
 
         /* Decoded images are shared across renders, which happen on every edit in
          * side-by-side mode. */
@@ -41,8 +50,14 @@ namespace Markdown {
             }
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 14);
             box.add_css_class ("markdown");
+            box.set_cursor_from_name ("text");
             render_children (doc, box, Align.NONE, 0);
             return box;
+        }
+
+        void add_segment (Gtk.Widget widget) {
+            segments.add (new Notes.TextSegment (widget, next_separator ?? block_separator));
+            next_separator = null;
         }
 
         public Gtk.Widget? get_anchor (string slug) {
@@ -204,6 +219,8 @@ namespace Markdown {
             return column;
         }
 
+        /* Labels aren't selectable themselves: Notes.TextSelection selects across
+         * all the segments of the note. */
         Gtk.Label text_label (Inline? from, Inline? stop, string css, Align align, bool selectable = true) {
             var sb = new StringBuilder ();
             label_matched = false;
@@ -226,7 +243,6 @@ namespace Markdown {
             }
             label.wrap = true;
             label.wrap_mode = Pango.WrapMode.WORD_CHAR;
-            label.selectable = selectable;
             label.xalign = align == Align.CENTER ? 0.5f : align == Align.RIGHT ? 1.0f : 0.0f;
             label.justify = align == Align.CENTER ? Gtk.Justification.CENTER
                 : align == Align.RIGHT ? Gtk.Justification.RIGHT : Gtk.Justification.LEFT;
@@ -237,6 +253,9 @@ namespace Markdown {
             });
             if (label_matched) {
                 match_widgets.add (label);
+            }
+            if (selectable) {
+                add_segment (label);
             }
             return label;
         }
@@ -415,6 +434,9 @@ namespace Markdown {
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, spacing);
             box.add_css_class ("md-list");
             int number = list.start;
+            string outer_separator = block_separator;
+            next_separator = next_separator ?? outer_separator;
+            block_separator = "\n";
             for (int k = 0; k < list.children.length; k++) {
                 Block item = list.children[k];
                 var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
@@ -425,6 +447,7 @@ namespace Markdown {
                     check.active = item.checked;
                     check.sensitive = !read_only;
                     check.add_css_class ("md-task");
+                    check.set_cursor_from_name ("default");
                     int line = item.line;
                     check.toggled.connect (() => task_toggled (line, check.active));
                     marker = check;
@@ -452,6 +475,7 @@ namespace Markdown {
                 row.append (content);
                 box.append (row);
             }
+            block_separator = outer_separator;
             return box;
         }
 
@@ -544,6 +568,10 @@ namespace Markdown {
             view.right_margin = 48;
             view.wrap_mode = Gtk.WrapMode.NONE;
             view.hexpand = true;
+            // Notes.TextSelection selects the code along with the text around it.
+            view.can_target = false;
+            view.focusable = false;
+            add_segment (view);
 
             var scroller = new Gtk.ScrolledWindow ();
             scroller.vscrollbar_policy = Gtk.PolicyType.NEVER;
@@ -580,6 +608,7 @@ namespace Markdown {
             copy.margin_end = 6;
             copy.add_css_class ("flat");
             copy.add_css_class ("md-copy");
+            copy.set_cursor_from_name ("default");
             copy.clicked.connect (() => {
                 copy.get_clipboard ().set_text (code);
                 copy.icon_name = "object-select-symbolic";
@@ -607,6 +636,11 @@ namespace Markdown {
                 int cols = (int) row.children.length;
                 for (int c = 0; c < cols; c++) {
                     Block cell = row.children[c];
+                    if (c > 0) {
+                        next_separator = "\t";
+                    } else if (r > 0) {
+                        next_separator = "\n";
+                    }
                     var label = text_label (cell.inlines != null ? cell.inlines.first : null, null,
                                             "md-cell-label", cell.align);
                     label.max_width_chars = 40;
@@ -644,8 +678,10 @@ namespace Markdown {
                                                 "md-summary", Align.NONE, false);
             expander.expanded = b.open;
             expander.add_css_class ("md-details");
+            expander.set_cursor_from_name ("default");
 
             var inner = new Gtk.Box (Gtk.Orientation.VERTICAL, 14);
+            inner.set_cursor_from_name ("text");
             inner.margin_top = 10;
             inner.margin_start = 24;
             render_children (b, inner, align, depth);
@@ -657,6 +693,7 @@ namespace Markdown {
 
         Gtk.Widget image_widget (Inline image, string? link) {
             var holder = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+            holder.set_cursor_from_name ("default");
             var view = new Notes.ImageView (image.width);
             holder.append (view);
 
