@@ -121,10 +121,23 @@ overlay:focus-within > .text-selection {
   font-feature-settings: "tnum";
 }
 
+/* Diagrams have the view background, which they are drawn for. */
+.markdown .md-diagram {
+  border-radius: 12px;
+  border: 1px solid alpha(currentColor, 0.1);
+  background-color: var(--view-bg-color);
+}
+
+.markdown .md-diagram mermaid-diagram {
+  margin: 16px;
+}
+
+.markdown .md-diagram .md-copy,
 .markdown .md-code-block .md-copy {
   opacity: 0.6;
 }
 
+.markdown .md-diagram .md-copy:hover,
 .markdown .md-code-block .md-copy:hover {
   opacity: 1;
 }

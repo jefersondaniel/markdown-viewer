@@ -76,6 +76,11 @@ CommonMark plus the GitHub extensions:
 
 - Headings, emphasis, links (including reference links), images, block quotes, lists and code
 - Tables with alignment, task lists (clickable in View mode), strikethrough, bare URLs
+- [Mermaid](https://mermaid.js.org/) diagrams in `mermaid` code blocks: flowcharts, sequence,
+  class, state and entity relationship diagrams, and pie charts. They're drawn natively by
+  [mermaid-gtk](subprojects/mermaid-gtk/), and its [feature list](subprojects/mermaid-gtk/FEATURES.md)
+  shows which parts of the syntax are supported. Other diagram types, and diagrams with
+  errors, are shown as code with a short explanation.
 
 A paragraph written directly under the first `#` title, with no blank line in
 between, is shown as a subtitle. The **Markdown Guide** in the main menu shows
@@ -110,6 +115,7 @@ HTML comments are hidden. Any other tag is dropped, but the text inside it is ke
 | `src/editor.vala` | Source editor with list continuation and shortcuts |
 | `src/files.vala` | File name helpers |
 | `src/app.css` | Styling of rendered Markdown |
+| `subprojects/mermaid-gtk/` | Mermaid diagram library, kept separate from the app |
 
 ## Releasing
 
@@ -129,3 +135,9 @@ Releases are automatic. Commit messages follow
 The [Flatpak workflow](.github/workflows/flatpak.yml) also builds the app for pushes and pull
 requests that change the app or its packaging, to catch build problems early. Changes to
 documentation or screenshots don't trigger it. The Flatpak manifest is in `build-aux/flatpak/`.
+
+## License
+
+Markdown Viewer is free software under the [GNU General Public License](COPYING), version 3
+or later. The Mermaid library in `subprojects/mermaid-gtk/` includes code ported from
+Mermaid and dagre, which are under the MIT License; see its [README](subprojects/mermaid-gtk/README.md).

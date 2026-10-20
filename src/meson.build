@@ -53,12 +53,20 @@ sources = files(
   'widgets/wrap-box.vala',
 )
 
+# Mermaid diagrams. The library lives in subprojects/mermaid-gtk and is built
+# into the app; see its README.
+mermaid = dependency('mermaid-gtk-0',
+  fallback: ['mermaid-gtk', 'mermaid_gtk_dep'],
+  default_options: ['default_library=static'],
+)
+
 deps = [
   dependency('glib-2.0', version: '>= 2.76'),
   dependency('gio-2.0'),
   dependency('gtk4', version: '>= 4.14'),
   libadwaita,
   dependency('gtksourceview-5', version: '>= 5.10'),
+  mermaid,
 ]
 
 executable('gnome-markdown',

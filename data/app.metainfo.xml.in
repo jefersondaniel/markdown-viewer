@@ -15,6 +15,7 @@
     <ul>
       <li>Markdown is shown with native widgets, without a web engine</li>
       <li>Tables, task lists, block quotes and code with syntax highlighting</li>
+      <li>Mermaid diagrams: flowcharts, sequence, class, state and entity relationship diagrams, and pie charts</li>
       <li>Edit and preview side by side</li>
       <li>Select and copy text across the whole note</li>
       <li>New notes stay drafts until you save them</li>

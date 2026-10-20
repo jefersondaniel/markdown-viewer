@@ -106,6 +106,9 @@ namespace Markdown {
                 return list_widget (b, align, depth);
 
             case BlockKind.CODE:
+                if (b.info.strip ().down () == "mermaid") {
+                    return diagram_widget (b);
+                }
                 return code_widget (b);
 
             case BlockKind.RULE:
@@ -541,6 +544,85 @@ namespace Markdown {
                 lang = lm.guess_language ("file." + info, null);
             }
             return lang;
+        }
+
+        /* Parsed diagrams by source, so that re-rendering keeps their layouts. */
+        static HashTable<string, Mermaid.Diagram>? diagrams;
+
+        static Mermaid.Diagram parse_diagram (string code) throws Mermaid.ParseError {
+            if (diagrams == null || diagrams.size () > 64) {
+                diagrams = new HashTable<string, Mermaid.Diagram> (str_hash, str_equal);
+            }
+            var d = diagrams[code];
+            if (d == null) {
+                d = Mermaid.parse (code);
+                diagrams[code] = d;
+            }
+            return d;
+        }
+
+        /*
+         * A Mermaid diagram. When it can't be drawn, the source is shown as
+         * code with a note saying why.
+         */
+        Gtk.Widget diagram_widget (Block b) {
+            string code = b.code;
+            if (code.has_suffix ("\n")) {
+                code = code.substring (0, code.length - 1);
+            }
+
+            Mermaid.Diagram diagram;
+            try {
+                diagram = parse_diagram (code);
+            } catch (Mermaid.ParseError e) {
+                var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 6);
+                box.append (code_widget (b));
+                string reason;
+                if (e is Mermaid.ParseError.UNSUPPORTED) {
+                    reason = _("This diagram can't be shown: %s.").printf (e.message);
+                } else {
+                    reason = _("This diagram has an error. %s").printf (e.message);
+                }
+                var note = new Gtk.Label (reason);
+                note.xalign = 0;
+                note.wrap = true;
+                note.wrap_mode = Pango.WrapMode.WORD_CHAR;
+                note.margin_start = 4;
+                note.add_css_class ("dim-label");
+                note.add_css_class ("caption");
+                box.append (note);
+                return box;
+            }
+
+            var view = new Mermaid.View (diagram);
+            view.accent = Adw.StyleManager.get_default ().get_accent_color_rgba ();
+            view.hexpand = true;
+            view.set_cursor_from_name ("default");
+
+            var copy = new Gtk.Button.from_icon_name ("edit-copy-symbolic");
+            copy.tooltip_text = _("Copy Diagram Source");
+            copy.halign = Gtk.Align.END;
+            copy.valign = Gtk.Align.START;
+            copy.margin_top = 6;
+            copy.margin_end = 6;
+            copy.add_css_class ("flat");
+            copy.add_css_class ("md-copy");
+            copy.set_cursor_from_name ("default");
+            copy.clicked.connect (() => {
+                copy.get_clipboard ().set_text (code);
+                copy.icon_name = "object-select-symbolic";
+                Timeout.add (1500, () => {
+                    copy.icon_name = "edit-copy-symbolic";
+                    return Source.REMOVE;
+                });
+            });
+
+            var overlay = new Gtk.Overlay ();
+            overlay.child = view;
+            overlay.add_overlay (copy);
+            overlay.overflow = Gtk.Overflow.HIDDEN;
+            overlay.add_css_class ("md-diagram");
+            return overlay;
         }
 
         Gtk.Widget code_widget (Block b) {
