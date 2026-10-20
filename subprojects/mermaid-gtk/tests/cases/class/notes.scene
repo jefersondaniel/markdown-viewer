@@ -1,0 +1,19 @@
+class 
+scene 332.0 363.0
+shape fill=group_fill stroke=group_stroke/1.0 M13.0,173.0 L319.0,173.0 C321.8,173.0 324.0,175.2 324.0,178.0 L324.0,340.0 C324.0,342.8 321.8,345.0 319.0,345.0 L13.0,345.0 C10.2,345.0 8.0,342.8 8.0,340.0 L8.0,178.0 C8.0,175.2 10.2,173.0 13.0,173.0 Z
+text 166.0,187.0 center 16.0 "Shapes"
+shape stroke=line/1.0 dashed M113.5,48.0 L128.1,80.8 C142.7,113.5 172.0,179.0 190.8,213.3 C209.5,247.7 217.9,250.9 222.0,252.5 L226.2,254.1
+shape stroke=line/1.0 M163.8,278.0 L170.0,278.0 C176.3,278.0 188.7,278.0 199.1,277.3 C209.5,276.6 217.9,275.3 222.0,274.6 L226.2,273.9
+shape fill=background stroke=line/1.0 M149.8,278.0 L163.8,271.0 L163.8,285.0 Z
+shape fill=#ff99ffff stroke=node_stroke/1.0 M59.4,246.0 L149.8,246.0 L149.8,310.0 L59.4,310.0 Z
+text 104.6,266.0 center 16.0 color=#333333ff "<b>Triangle</b>"
+shape stroke=node_stroke/1.0 M59.4,286.0 L149.8,286.0
+shape stroke=node_stroke/1.0 M59.4,298.0 L149.8,298.0
+shape fill=#ff6666ff stroke=node_stroke/1.0 M226.2,236.0 L299.0,236.0 L299.0,300.0 L226.2,300.0 Z
+text 262.6,256.0 center 16.0 color=#333333ff "<b>Square</b>"
+shape stroke=node_stroke/1.0 M226.2,276.0 L299.0,276.0
+shape stroke=node_stroke/1.0 M226.2,288.0 L299.0,288.0
+shape fill=note_fill stroke=note_stroke/1.0 M33.0,98.0 L176.2,98.0 L176.2,138.0 L33.0,138.0 Z
+text 104.6,118.0 center 16.0 "A general note"
+shape fill=note_fill stroke=note_stroke/1.0 M50.6,8.0 L158.6,8.0 L158.6,48.0 L50.6,48.0 Z
+text 104.6,28.0 center 16.0 "Four sides"

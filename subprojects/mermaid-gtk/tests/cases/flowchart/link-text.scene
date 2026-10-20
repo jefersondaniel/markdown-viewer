@@ -1,0 +1,48 @@
+flowchart 
+scene 284.0 546.0
+shape stroke=line/1.5 M202.2,45.4 L189.8,53.3 C177.3,61.3 152.5,77.1 140.0,89.6 C127.6,102.0 127.6,111.0 127.6,115.5 L127.6,120.0
+shape fill=line stroke=line/1.0 M127.6,128.0 L123.1,119.0 L132.1,119.0 Z
+shape stroke=line/1.5 M108.2,169.8 L99.9,177.0 C91.6,184.2 75.0,198.6 66.7,210.3 C58.4,222.0 58.4,231.0 58.4,235.5 L58.4,240.0
+shape fill=line stroke=line/1.0 M58.4,248.0 L53.9,239.0 L62.9,239.0 Z
+shape stroke=line/1.5 dotted M58.4,298.0 L58.4,303.8 C58.4,309.7 58.4,321.3 58.4,331.7 C58.4,342.0 58.4,351.0 58.4,355.5 L58.4,360.0
+shape fill=line stroke=line/1.0 M58.4,368.0 L53.9,359.0 L62.9,359.0 Z
+shape stroke=line/3.5 M58.4,418.0 L58.4,423.8 C58.4,429.7 58.4,441.3 58.4,451.7 C58.4,462.0 58.4,471.0 58.4,475.5 L58.4,480.0
+shape fill=line stroke=line/1.0 M58.4,488.0 L53.9,479.0 L62.9,479.0 Z
+shape stroke=line/1.5 M221.6,58.0 L221.6,63.8 C221.6,69.7 221.6,81.3 221.6,97.2 C221.6,113.0 221.6,133.0 221.6,153.0 C221.6,173.0 221.6,193.0 216.7,208.4 C211.7,223.9 201.8,234.8 196.9,240.2 L192.0,245.7
+shape fill=line stroke=line/1.0 M186.6,251.6 L189.3,241.9 L196.0,248.0 Z
+shape stroke=line/1.5 M241.0,54.4 L246.8,60.8 C252.7,67.3 264.3,80.1 270.2,96.6 C276.0,113.0 276.0,133.0 276.0,153.0 C276.0,173.0 276.0,193.0 274.5,207.6 C273.0,222.1 269.9,231.3 268.4,235.8 L266.9,240.4
+shape fill=line stroke=line/1.0 M264.3,248.0 L262.9,238.0 L271.4,240.9 Z
+shape stroke=line/1.5 M131.7,178.0 L132.6,183.8 C133.6,189.7 135.5,201.3 138.8,211.8 C142.0,222.3 146.6,231.6 148.9,236.2 L151.2,240.8
+shape fill=line stroke=line/1.0 M154.8,248.0 L146.7,241.9 L154.8,237.9 Z
+shape stroke=line/1.5 M147.0,171.1 L154.5,178.1 C161.9,185.1 176.9,199.0 190.8,212.1 C204.8,225.1 217.8,237.3 224.3,243.3 L230.8,249.4
+shape fill=line stroke=line/1.0 M236.6,254.9 L227.0,252.0 L233.1,245.4 Z
+shape stroke=line/1.5 M256.0,298.0 L256.0,303.8 C256.0,309.7 256.0,321.3 256.0,331.7 C256.0,342.0 256.0,351.0 256.0,355.5 L256.0,360.0
+shape fill=line stroke=line/1.0 M256.0,368.0 L251.5,359.0 L260.5,359.0 Z
+shape stroke=line/1.5 M256.0,418.0 L256.0,423.8 C256.0,429.7 256.0,441.3 256.0,451.7 C256.0,462.0 256.0,471.0 256.0,475.5 L256.0,480.0
+shape fill=line stroke=line/1.0 M256.0,488.0 L251.5,479.0 L260.5,479.0 Z
+shape fill=background M86.0,83.0 L169.2,83.0 L169.2,103.0 L86.0,103.0 Z
+text 127.6,93.0 center 16.0 "pipe text"
+shape fill=background M8.0,203.0 L108.8,203.0 L108.8,223.0 L8.0,223.0 Z
+text 58.4,213.0 center 16.0 "inline text"
+shape fill=background M8.0,323.0 L108.8,323.0 L108.8,343.0 L8.0,343.0 Z
+text 58.4,333.0 center 16.0 "dotted text"
+shape fill=background M12.4,443.0 L104.4,443.0 L104.4,463.0 L12.4,463.0 Z
+text 58.4,453.0 center 16.0 "thick text"
+shape fill=node_fill stroke=node_stroke/1.0 M202.2,8.0 L241.0,8.0 L241.0,58.0 L202.2,58.0 Z
+text 221.6,33.0 center 16.0 "A"
+shape fill=node_fill stroke=node_stroke/1.0 M108.2,128.0 L147.0,128.0 L147.0,178.0 L108.2,178.0 Z
+text 127.6,153.0 center 16.0 "B"
+shape fill=node_fill stroke=node_stroke/1.0 M39.0,248.0 L77.8,248.0 L77.8,298.0 L39.0,298.0 Z
+text 58.4,273.0 center 16.0 "C"
+shape fill=node_fill stroke=node_stroke/1.0 M39.0,368.0 L77.8,368.0 L77.8,418.0 L39.0,418.0 Z
+text 58.4,393.0 center 16.0 "D"
+shape fill=node_fill stroke=node_stroke/1.0 M39.0,488.0 L77.8,488.0 L77.8,538.0 L39.0,538.0 Z
+text 58.4,513.0 center 16.0 "E"
+shape fill=node_fill stroke=node_stroke/1.0 M147.8,248.0 L186.6,248.0 L186.6,298.0 L147.8,298.0 Z
+text 167.2,273.0 center 16.0 "F"
+shape fill=node_fill stroke=node_stroke/1.0 M236.6,248.0 L275.4,248.0 L275.4,298.0 L236.6,298.0 Z
+text 256.0,273.0 center 16.0 "G"
+shape fill=node_fill stroke=node_stroke/1.0 M236.6,368.0 L275.4,368.0 L275.4,418.0 L236.6,418.0 Z
+text 256.0,393.0 center 16.0 "H"
+shape fill=node_fill stroke=node_stroke/1.0 M236.6,488.0 L275.4,488.0 L275.4,538.0 L236.6,538.0 Z
+text 256.0,513.0 center 16.0 "I"

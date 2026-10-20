@@ -30,6 +30,17 @@ function greet(name) {
 greet("GNOME");
 ```
 
+## Diagrams
+Code blocks marked `mermaid` are drawn as diagrams: flowcharts, sequence, class,
+state and entity relationship diagrams, and pie charts.
+
+```mermaid
+flowchart LR
+  Write --> Preview{Looks good?}
+  Preview -- Yes --> Share
+  Preview -- No --> Write
+```
+
 ## Tables
 
 | You type | You get |

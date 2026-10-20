@@ -1,0 +1,32 @@
+graph TB 50 10 70 8 8
+node n0 44 30 c0
+node n1 99 49
+node n2 29 24
+node n3 71 56 c1
+node n4 28 52
+node n5 101 28 c1
+node n6 113 22
+node n7 89 31
+node n8 29 57
+node n9 48 47
+node n10 130 55
+node n11 77 47
+node n12 122 51 c1
+edge n8 n10 e1 1 1 73 19 l
+edge n6 n10 e2 3 2 38 23 r
+edge n1 n2 e3 1 1 33 30 c
+edge n5 n12 e4 3 2 0 0 l
+edge n4 n5 e5 2 2 0 0 l
+edge n6 n7 e6 1 1 0 0 l
+edge n5 n12 e7 3 1 0 0 c
+edge n2 n11 e8 1 2 0 0 c
+edge n0 n8 e9 1 1 0 0 c
+edge n5 n9 e10 3 2 0 0 c
+edge n5 n8 e11 3 1 0 0 c
+edge n8 n11 e12 1 1 0 0 c
+edge n0 n9 e13 1 2 39 18 c
+edge n1 n11 e14 1 1 0 0 r
+edge n2 n4 e15 1 1 49 10 c
+edge n5 n7 e16 3 1 67 21 r
+edge n5 n7 e17 1 1 0 0 l
+edge n1 n3 e18 2 2 26 28 c

@@ -1,0 +1,12 @@
+%% features: sequence.box sequence.create-destroy sequence.title
+sequenceDiagram
+  title Boxes
+  box Aqua Group one
+    participant A
+    participant B
+  end
+  A->>B: Hello
+  create participant C
+  B->>C: Create
+  destroy C
+  C-->>B: Bye

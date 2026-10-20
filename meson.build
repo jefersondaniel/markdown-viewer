@@ -1,6 +1,7 @@
 project('gnome-markdown', ['c', 'vala'],
   version: files('version.txt'),  # maintained by release-please
   meson_version: '>= 1.0.0',
+  license: 'GPL-3.0-or-later',
   default_options: ['warning_level=2'],
 )
 

@@ -1,0 +1,23 @@
+sequence 
+scene 517.1 405.5
+shape stroke=group_stroke/1.0 M154.7,75.0 L154.7,330.5
+shape stroke=group_stroke/1.0 M354.7,75.0 L354.7,330.5
+shape fill=node_fill stroke=node_stroke/1.0 M82.7,10.0 L226.7,10.0 C228.4,10.0 229.7,11.3 229.7,13.0 L229.7,72.0 C229.7,73.7 228.4,75.0 226.7,75.0 L82.7,75.0 C81.0,75.0 79.7,73.7 79.7,72.0 L79.7,13.0 L79.7,13.0 C79.7,11.3 81.0,10.0 82.7,10.0 Z
+text 154.7,42.5 center 16.0 "Alice"
+shape fill=node_fill stroke=node_stroke/1.0 M282.7,10.0 L426.7,10.0 C428.4,10.0 429.7,11.3 429.7,13.0 L429.7,72.0 C429.7,73.7 428.4,75.0 426.7,75.0 L282.7,75.0 C281.0,75.0 279.7,73.7 279.7,72.0 L279.7,13.0 L279.7,13.0 C279.7,11.3 281.0,10.0 282.7,10.0 Z
+text 354.7,42.5 center 16.0 "John"
+shape stroke=line/1.5 M154.7,120.5 L348.7,120.5
+text 254.7,102.5 center 16.0 "Hello"
+shape fill=line stroke=line/1.0 M354.7,120.5 L344.7,125.5 L344.7,115.5 Z
+shape fill=note_fill stroke=note_stroke/1.0 M25.0,130.5 L129.7,130.5 L129.7,168.0 L25.0,168.0 Z
+text 77.4,149.2 center 14.0 "On the left"
+shape fill=note_fill stroke=note_stroke/1.0 M379.7,178.0 L492.1,178.0 L492.1,215.5 L379.7,215.5 Z
+text 435.9,196.8 center 14.0 "On the right"
+shape fill=note_fill stroke=note_stroke/1.0 M98.5,225.5 L211.0,225.5 L211.0,263.0 L98.5,263.0 Z
+text 154.7,244.2 center 14.0 "Over one"
+shape fill=note_fill stroke=note_stroke/1.0 M117.2,273.0 L392.2,273.0 L392.2,310.5 L117.2,310.5 Z
+text 254.7,291.8 center 14.0 "Over both"
+shape fill=node_fill stroke=node_stroke/1.0 M82.7,330.5 L226.7,330.5 C228.4,330.5 229.7,331.8 229.7,333.5 L229.7,392.5 C229.7,394.2 228.4,395.5 226.7,395.5 L82.7,395.5 C81.0,395.5 79.7,394.2 79.7,392.5 L79.7,333.5 C79.7,331.8 81.0,330.5 82.7,330.5 Z
+text 154.7,363.0 center 16.0 "Alice"
+shape fill=node_fill stroke=node_stroke/1.0 M282.7,330.5 L426.7,330.5 C428.4,330.5 429.7,331.8 429.7,333.5 L429.7,392.5 C429.7,394.2 428.4,395.5 426.7,395.5 L282.7,395.5 C281.0,395.5 279.7,394.2 279.7,392.5 L279.7,333.5 C279.7,331.8 281.0,330.5 282.7,330.5 Z
+text 354.7,363.0 center 16.0 "John"

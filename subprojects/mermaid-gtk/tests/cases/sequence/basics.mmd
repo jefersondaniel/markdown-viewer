@@ -1,0 +1,16 @@
+%% features: sequence.participant sequence.actor sequence.alias sequence.implicit sequence.message.arrows sequence.self-message sequence.line-breaks sequence.mirror-actors
+sequenceDiagram
+  participant A as Alice
+  actor B as Bob
+  A->>B: Solid arrow
+  B-->>A: Dotted arrow
+  A->B: Solid line
+  B-->A: Dotted line
+  A-xB: Cross
+  B--xA: Dotted cross
+  A-)B: Async
+  B--)A: Dotted async
+  A<<->>B: Both ways
+  A<<-->>B: Both ways, dotted
+  B->>B: Thinking<br/>out loud
+  A->>Carol: Carol appears

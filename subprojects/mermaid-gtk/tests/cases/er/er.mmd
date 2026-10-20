@@ -1,0 +1,14 @@
+%% features: er.header er.entity er.attributes er.attribute-keys er.attribute-comments er.relationship er.cardinality er.identifying er.label er.alias er.direction er.styles
+erDiagram
+  direction LR
+  CUSTOMER ||--o{ ORDER : places
+  ORDER ||--|{ LINE-ITEM : contains
+  CUSTOMER }|..|{ ADDRESS : "lives at"
+  ORDER |o--o| INVOICE : has
+  CUSTOMER {
+    string name
+    int id PK "the key"
+    int address FK, UK
+  }
+  ADDRESS["Delivery address"]
+  style CUSTOMER fill:#fd6

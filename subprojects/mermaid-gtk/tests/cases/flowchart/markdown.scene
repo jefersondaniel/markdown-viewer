@@ -1,0 +1,12 @@
+flowchart 
+scene 506.8 164.0
+shape fill=group_fill stroke=group_stroke/1.0 M364.6,8.0 L493.8,8.0 C496.6,8.0 498.8,10.2 498.8,13.0 L498.8,151.0 C498.8,153.8 496.6,156.0 493.8,156.0 L364.6,156.0 C361.8,156.0 359.6,153.8 359.6,151.0 L359.6,13.0 C359.6,10.2 361.8,8.0 364.6,8.0 Z
+text 429.2,22.0 center 16.0 "<i>Markdown</i> title"
+shape stroke=line/1.5 M238.0,96.0 L250.2,96.0 C262.5,96.0 286.9,96.0 311.4,96.0 C335.9,96.0 360.3,96.0 375.4,96.0 C390.5,96.0 396.1,96.0 399.0,96.0 L401.8,96.0
+shape fill=line stroke=line/1.0 M409.8,96.0 L400.8,100.5 L400.8,91.5 Z
+shape fill=background M261.0,86.0 L361.8,86.0 L361.8,106.0 L261.0,106.0 Z
+text 311.4,96.0 center 16.0 "a <b>bold</b> link"
+shape fill=node_fill stroke=node_stroke/1.0 M409.8,71.0 L448.6,71.0 L448.6,121.0 L409.8,121.0 Z
+text 429.2,96.0 center 16.0 "B"
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,51.0 L238.0,51.0 L238.0,141.0 L8.0,141.0 Z
+text 123.0,96.0 center 16.0 "<b>Bold</b> and <i>italic</i> in a Markdown string that wraps automatically"

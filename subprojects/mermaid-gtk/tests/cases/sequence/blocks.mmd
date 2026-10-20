@@ -1,0 +1,31 @@
+%% features: sequence.loop sequence.alt sequence.opt sequence.par sequence.critical sequence.break sequence.rect sequence.nested-blocks
+sequenceDiagram
+  loop Every minute
+    A->>B: Ping
+  end
+  alt is sick
+    B->>A: Not good
+  else is well
+    B->>A: Fine
+  end
+  opt Extra
+    A->>B: Thanks
+  end
+  par A to B
+    A->>B: Hi
+  and A to C
+    A->>C: Hi
+  end
+  critical Connect
+    A->>DB: connect
+  option Timeout
+    A->>A: Retry
+  end
+  break When it fails
+    A-->>B: Error
+  end
+  rect rgb(200, 150, 255)
+    loop Inner
+      A->>B: Nested
+    end
+  end

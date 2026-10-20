@@ -1,0 +1,22 @@
+%% features: state.fork-join state.choice state.notes state.styles
+stateDiagram
+  state fork_state <<fork>>
+  state join_state <<join>>
+  state check <<choice>>
+  [*] --> fork_state
+  fork_state --> A
+  fork_state --> B
+  A --> join_state
+  B --> join_state
+  join_state --> check
+  check --> Good : ok
+  check --> Bad : not ok
+  note right of Good : All fine
+  note left of Bad
+    Something
+    went wrong
+  end note
+  classDef bad fill:#f00,color:white
+  class Bad bad
+  Good:::bad
+  style A fill:#9f9

@@ -1,0 +1,8 @@
+%% features: flowchart.shape-data flowchart.shape-data.label flowchart.shape-data.names
+flowchart TB
+  A@{ shape: doc, label: "Document" } --> B@{ shape: delay, label: "Delay" } --> C@{ shape: lin-doc, label: "Lined" }
+  C --> D@{ shape: notch-rect, label: "Card" } --> E@{ shape: tri, label: "Extract" } --> F@{ shape: f-circ }
+  G@{ shape: fork } --> H@{ shape: hourglass, label: "Collate" } --> I@{ shape: st-rect, label: "Processes" }
+  I --> J@{ shape: win-pane, label: "Storage" } --> K@{ shape: lin-cyl, label: "Disk" } --> L@{ shape: docs, label: "Documents" }
+  M@{ shape: tag-rect, label: "Tagged" } --> N@{ shape: curv-trap, label: "Display" } --> O@{ shape: bow-rect, label: "Stored" }
+  O --> P@{ shape: datastore, label: "Store" } --> Q@{ shape: folder, label: "Folder" } --> R@{ shape: cloud, label: "Not drawn yet" }

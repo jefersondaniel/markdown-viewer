@@ -1,0 +1,35 @@
+graph RL 30 10 40 8 8
+node n0 129 50 c2
+node n1 101 58 c2
+node n2 38 46
+node n3 124 52
+node n4 137 41
+node n5 22 47
+node n6 67 56 c2
+node n7 26 42 c0
+node n8 26 50 c2
+node n9 67 57
+node n10 119 20
+node n11 131 45
+node n12 50 27 c0
+node n13 91 33
+node n14 51 53
+node n15 66 23 c0
+node n16 54 24
+node c2 0 0 c0
+edge n4 n6 e1 1 1 0 0 c
+edge n10 n3 e2 1 1 0 0 c
+edge n1 n11 e3 2 2 0 0 c
+edge n6 n9 e4 2 1 0 0 c
+edge n12 n15 e5 3 1 0 0 c
+edge n6 n8 e6 1 1 0 0 r
+edge n2 n13 e7 1 2 0 0 l
+edge n2 n15 e8 1 1 0 0 r
+edge n5 n9 e9 3 1 0 0 l
+edge n7 n13 e10 2 1 0 0 c
+edge n15 n10 e11 3 1 0 0 l
+edge n1 n10 e12 1 1 39 29 c
+edge n6 n9 e13 1 2 0 0 c
+edge n0 n16 e14 3 1 0 0 l
+edge n14 n14 e15 2 1 0 0 r
+edge n8 n5 e16 2 1 0 0 r

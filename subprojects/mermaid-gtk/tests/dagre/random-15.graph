@@ -1,0 +1,12 @@
+graph TB 80 20 50 8 8
+node n0 50 21
+node n1 27 29
+node n2 129 43
+node n3 50 27
+node n4 63 49
+node n5 110 42
+node n6 55 45
+edge n2 n1 e1 1 1 55 20 l
+edge n1 n4 e2 1 1 0 0 r
+edge n3 n4 e3 2 1 0 0 c
+edge n3 n6 e4 1 1 32 29 l

@@ -1,0 +1,87 @@
+sequence 
+scene 800.0 1145.0
+shape fill=#c896ff59 M50.0,944.5 L350.0,944.5 L350.0,1050.0 L50.0,1050.0 Z
+shape stroke=group_stroke/1.0 M100.0,75.0 L100.0,1070.0
+shape stroke=group_stroke/1.0 M300.0,75.0 L300.0,1070.0
+shape stroke=group_stroke/1.0 M500.0,75.0 L500.0,1070.0
+shape stroke=group_stroke/1.0 M700.0,75.0 L700.0,1070.0
+shape fill=node_fill stroke=node_stroke/1.0 M28.0,10.0 L172.0,10.0 C173.7,10.0 175.0,11.3 175.0,13.0 L175.0,72.0 C175.0,73.7 173.7,75.0 172.0,75.0 L28.0,75.0 C26.3,75.0 25.0,73.7 25.0,72.0 L25.0,13.0 L25.0,13.0 C25.0,11.3 26.3,10.0 28.0,10.0 Z
+text 100.0,42.5 center 16.0 "A"
+shape fill=node_fill stroke=node_stroke/1.0 M228.0,10.0 L372.0,10.0 C373.7,10.0 375.0,11.3 375.0,13.0 L375.0,72.0 C375.0,73.7 373.7,75.0 372.0,75.0 L228.0,75.0 C226.3,75.0 225.0,73.7 225.0,72.0 L225.0,13.0 L225.0,13.0 C225.0,11.3 226.3,10.0 228.0,10.0 Z
+text 300.0,42.5 center 16.0 "B"
+shape fill=node_fill stroke=node_stroke/1.0 M428.0,10.0 L572.0,10.0 C573.7,10.0 575.0,11.3 575.0,13.0 L575.0,72.0 C575.0,73.7 573.7,75.0 572.0,75.0 L428.0,75.0 C426.3,75.0 425.0,73.7 425.0,72.0 L425.0,13.0 L425.0,13.0 C425.0,11.3 426.3,10.0 428.0,10.0 Z
+text 500.0,42.5 center 16.0 "C"
+shape fill=node_fill stroke=node_stroke/1.0 M628.0,10.0 L772.0,10.0 C773.7,10.0 775.0,11.3 775.0,13.0 L775.0,72.0 C775.0,73.7 773.7,75.0 772.0,75.0 L628.0,75.0 C626.3,75.0 625.0,73.7 625.0,72.0 L625.0,13.0 L625.0,13.0 C625.0,11.3 626.3,10.0 628.0,10.0 Z
+text 700.0,42.5 center 16.0 "DB"
+shape stroke=line/1.5 M100.0,160.5 L294.0,160.5
+text 200.0,142.5 center 16.0 "Ping"
+shape fill=line stroke=line/1.0 M300.0,160.5 L290.0,165.5 L290.0,155.5 Z
+shape stroke=group_stroke/1.5 M80.0,85.0 L320.0,85.0 L320.0,170.5 L80.0,170.5 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,85.0 L130.0,85.0 L130.0,99.0 L123.0,105.0 L80.0,105.0 Z
+text 105.0,95.0 center 14.0 bold "loop"
+text 225.0,100.0 center 16.0 "[Every minute]"
+shape stroke=line/1.5 M300.0,256.0 L106.0,256.0
+text 200.0,238.0 center 16.0 "Not good"
+shape fill=line stroke=line/1.0 M100.0,256.0 L110.0,251.0 L110.0,261.0 Z
+shape stroke=line/1.5 M300.0,341.5 L106.0,341.5
+text 200.0,323.5 center 16.0 "Fine"
+shape fill=line stroke=line/1.0 M100.0,341.5 L110.0,336.5 L110.0,346.5 Z
+shape stroke=group_stroke/1.5 M80.0,180.5 L320.0,180.5 L320.0,351.5 L80.0,351.5 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,180.5 L130.0,180.5 L130.0,194.5 L123.0,200.5 L80.0,200.5 Z
+text 105.0,190.5 center 14.0 bold "alt"
+text 225.0,195.5 center 16.0 "[is sick]"
+shape stroke=group_stroke/1.5 dashed M80.0,266.0 L320.0,266.0
+text 225.0,281.0 center 16.0 "[is well]"
+shape stroke=line/1.5 M100.0,437.0 L294.0,437.0
+text 200.0,419.0 center 16.0 "Thanks"
+shape fill=line stroke=line/1.0 M300.0,437.0 L290.0,442.0 L290.0,432.0 Z
+shape stroke=group_stroke/1.5 M80.0,361.5 L320.0,361.5 L320.0,447.0 L80.0,447.0 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,361.5 L130.0,361.5 L130.0,375.5 L123.0,381.5 L80.0,381.5 Z
+text 105.0,371.5 center 14.0 bold "opt"
+text 225.0,376.5 center 16.0 "[Extra]"
+shape stroke=line/1.5 M100.0,532.5 L294.0,532.5
+text 200.0,514.5 center 16.0 "Hi"
+shape fill=line stroke=line/1.0 M300.0,532.5 L290.0,537.5 L290.0,527.5 Z
+shape stroke=line/1.5 M100.0,618.0 L494.0,618.0
+text 300.0,600.0 center 16.0 "Hi"
+shape fill=line stroke=line/1.0 M500.0,618.0 L490.0,623.0 L490.0,613.0 Z
+shape stroke=group_stroke/1.5 M80.0,457.0 L520.0,457.0 L520.0,628.0 L80.0,628.0 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,457.0 L130.0,457.0 L130.0,471.0 L123.0,477.0 L80.0,477.0 Z
+text 105.0,467.0 center 14.0 bold "par"
+text 325.0,472.0 center 16.0 "[A to B]"
+shape stroke=group_stroke/1.5 dashed M80.0,542.5 L520.0,542.5
+text 325.0,557.5 center 16.0 "[A to C]"
+shape stroke=line/1.5 M100.0,713.5 L694.0,713.5
+text 400.0,695.5 center 16.0 "connect"
+shape fill=line stroke=line/1.0 M700.0,713.5 L690.0,718.5 L690.0,708.5 Z
+shape stroke=line/1.5 M100.0,799.0 C160.0,789.0 160.0,829.0 100.0,819.0
+text 132.0,781.0 center 16.0 "Retry"
+shape fill=line stroke=line/1.0 M100.0,819.0 L110.6,815.5 L109.1,825.4 Z
+shape stroke=group_stroke/1.5 M80.0,638.0 L720.0,638.0 L720.0,839.0 L80.0,839.0 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,638.0 L163.8,638.0 L163.8,652.0 L156.8,658.0 L80.0,658.0 Z
+text 121.9,648.0 center 14.0 bold "critical"
+text 441.9,653.0 center 16.0 "[Connect]"
+shape stroke=group_stroke/1.5 dashed M80.0,723.5 L720.0,723.5
+text 441.9,738.5 center 16.0 "[Timeout]"
+shape stroke=line/1.5 dotted M100.0,924.5 L294.0,924.5
+text 200.0,906.5 center 16.0 "Error"
+shape fill=line stroke=line/1.0 M300.0,924.5 L290.0,929.5 L290.0,919.5 Z
+shape stroke=group_stroke/1.5 M80.0,849.0 L320.0,849.0 L320.0,934.5 L80.0,934.5 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,849.0 L138.4,849.0 L138.4,863.0 L131.4,869.0 L80.0,869.0 Z
+text 109.2,859.0 center 14.0 bold "break"
+text 229.2,864.0 center 16.0 "[When it fails]"
+shape stroke=line/1.5 M100.0,1030.0 L294.0,1030.0
+text 200.0,1012.0 center 16.0 "Nested"
+shape fill=line stroke=line/1.0 M300.0,1030.0 L290.0,1035.0 L290.0,1025.0 Z
+shape stroke=group_stroke/1.5 M80.0,954.5 L320.0,954.5 L320.0,1040.0 L80.0,1040.0 Z
+shape fill=group_fill stroke=group_stroke/1.5 M80.0,954.5 L130.0,954.5 L130.0,968.5 L123.0,974.5 L80.0,974.5 Z
+text 105.0,964.5 center 14.0 bold "loop"
+text 225.0,969.5 center 16.0 "[Inner]"
+shape fill=node_fill stroke=node_stroke/1.0 M28.0,1070.0 L172.0,1070.0 C173.7,1070.0 175.0,1071.3 175.0,1073.0 L175.0,1132.0 C175.0,1133.7 173.7,1135.0 172.0,1135.0 L28.0,1135.0 C26.3,1135.0 25.0,1133.7 25.0,1132.0 L25.0,1073.0 C25.0,1071.3 26.3,1070.0 28.0,1070.0 Z
+text 100.0,1102.5 center 16.0 "A"
+shape fill=node_fill stroke=node_stroke/1.0 M228.0,1070.0 L372.0,1070.0 C373.7,1070.0 375.0,1071.3 375.0,1073.0 L375.0,1132.0 C375.0,1133.7 373.7,1135.0 372.0,1135.0 L228.0,1135.0 C226.3,1135.0 225.0,1133.7 225.0,1132.0 L225.0,1073.0 C225.0,1071.3 226.3,1070.0 228.0,1070.0 Z
+text 300.0,1102.5 center 16.0 "B"
+shape fill=node_fill stroke=node_stroke/1.0 M428.0,1070.0 L572.0,1070.0 C573.7,1070.0 575.0,1071.3 575.0,1073.0 L575.0,1132.0 C575.0,1133.7 573.7,1135.0 572.0,1135.0 L428.0,1135.0 C426.3,1135.0 425.0,1133.7 425.0,1132.0 L425.0,1073.0 C425.0,1071.3 426.3,1070.0 428.0,1070.0 Z
+text 500.0,1102.5 center 16.0 "C"
+shape fill=node_fill stroke=node_stroke/1.0 M628.0,1070.0 L772.0,1070.0 C773.7,1070.0 775.0,1071.3 775.0,1073.0 L775.0,1132.0 C775.0,1133.7 773.7,1135.0 772.0,1135.0 L628.0,1135.0 C626.3,1135.0 625.0,1133.7 625.0,1132.0 L625.0,1073.0 C625.0,1071.3 626.3,1070.0 628.0,1070.0 Z
+text 700.0,1102.5 center 16.0 "DB"

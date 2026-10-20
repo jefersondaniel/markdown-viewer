@@ -1,0 +1,10 @@
+%% features: sequence.activation sequence.autonumber
+sequenceDiagram
+  autonumber
+  Alice->>+John: Hello
+  Alice->>+John: Again
+  John-->>-Alice: Hi
+  John-->>-Alice: Bye
+  activate Alice
+  Alice->>John: Explicit
+  deactivate Alice

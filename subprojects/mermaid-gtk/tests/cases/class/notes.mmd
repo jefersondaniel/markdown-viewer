@@ -1,0 +1,14 @@
+%% features: class.notes class.namespace class.direction class.styles
+classDiagram
+  direction LR
+  namespace Shapes {
+    class Triangle
+    class Square
+  }
+  note "A general note"
+  note for Square "Four sides"
+  Triangle <|-- Square
+  style Triangle fill:#f9f
+  classDef hot fill:#f66
+  class Square:::hot
+  cssClass "Triangle" hot
