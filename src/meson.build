@@ -49,6 +49,7 @@ sources = files(
   'markdown/renderer.vala',
   'widgets/file-tree.vala',
   'widgets/image-view.vala',
+  'widgets/text-selection.vala',
   'widgets/wrap-box.vala',
 )
 

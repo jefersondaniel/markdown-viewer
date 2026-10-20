@@ -63,6 +63,8 @@ namespace Notes {
         State state;
         Editor editor;
         Markdown.Renderer? renderer;
+        Gtk.Overlay preview_overlay = new Gtk.Overlay ();
+        TextSelection selection;
         GtkSource.SearchSettings search_settings;
         GtkSource.SearchContext search_context;
 
@@ -100,6 +102,7 @@ namespace Notes {
             this.state = state;
 
             setup_editor ();
+            setup_preview ();
             add_action_entries (ACTIONS, this);
             setup_sidebar ();
             setup_find ();
@@ -141,6 +144,11 @@ namespace Notes {
                 schedule_save ();
                 schedule_render ();
             });
+        }
+
+        void setup_preview () {
+            preview_clamp.child = preview_overlay;
+            selection = new TextSelection (preview_overlay, preview_scroller);
         }
 
         void setup_sidebar () {
@@ -418,7 +426,8 @@ namespace Notes {
             editor.buffer.text = "";
             loading = false;
             saved_text = "";
-            preview_clamp.child = null;
+            preview_overlay.child = null;
+            selection.set_segments (null);
             renderer = null;
             content_stack.visible_child_name = "empty";
             update_header ();
@@ -603,7 +612,8 @@ namespace Notes {
 
             var adj = preview_scroller.vadjustment;
             double position = adj.value;
-            preview_clamp.child = content;
+            preview_overlay.child = content;
+            selection.set_segments (r.segments);
             renderer = r;
             match_index = -1;
 

@@ -59,6 +59,10 @@ ninja -C build install
   close the window.
 - **New notes:** they start as `Untitled.md` and are renamed after their first line
   when you leave them.
+- **Selecting text:** in View mode a selection can run across paragraphs, lists, code
+  and tables, scrolling when you drag past the edge. Double-click selects a word,
+  triple-click a paragraph and Ctrl+A the whole note. Ctrl+C or the right-click menu
+  copies it as plain text.
 - **Text size:** Ctrl+Plus and Ctrl+Minus (or Ctrl and the scroll wheel) zoom the note from 80% to
   200%, and Ctrl+0 resets it. The note menu has the same controls.
 - **State:** the last folder, the last file, the text size and the window state are kept in
