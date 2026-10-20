@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.3.0...v0.4.0) (2026-10-20)
+
+
+### Features
+
+* show Mermaid diagrams in notes ([#9](https://github.com/jefersondaniel/markdown-viewer/issues/9)) ([499abda](https://github.com/jefersondaniel/markdown-viewer/commit/499abda232f4a456fa7418a304d89c33549c7d4a))
+
 ## [0.3.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.2.0...v0.3.0) (2026-10-20)
 
 
