@@ -597,7 +597,15 @@ namespace Markdown {
             var view = new Mermaid.View (diagram);
             view.accent = Adw.StyleManager.get_default ().get_accent_color_rgba ();
             view.hexpand = true;
+            // Wide diagrams scroll, like code, instead of shrinking past reading.
+            view.min_scale = 0.75;
             view.set_cursor_from_name ("default");
+
+            var scroller = new Gtk.ScrolledWindow ();
+            scroller.vscrollbar_policy = Gtk.PolicyType.NEVER;
+            scroller.hscrollbar_policy = Gtk.PolicyType.AUTOMATIC;
+            scroller.propagate_natural_height = true;
+            scroller.child = view;
 
             var copy = new Gtk.Button.from_icon_name ("edit-copy-symbolic");
             copy.tooltip_text = _("Copy Diagram Source");
@@ -618,7 +626,7 @@ namespace Markdown {
             });
 
             var overlay = new Gtk.Overlay ();
-            overlay.child = view;
+            overlay.child = scroller;
             overlay.add_overlay (copy);
             overlay.overflow = Gtk.Overflow.HIDDEN;
             overlay.add_css_class ("md-diagram");
