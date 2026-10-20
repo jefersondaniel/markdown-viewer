@@ -38,7 +38,9 @@ try {
 ```
 
 `Mermaid.View` is a height-for-width widget. It draws the diagram at the size of its
-font, shrinks it to fit narrower widths, and sets its accessible label and description
+font and shrinks it to fit narrower widths. Set `min_scale` to stop it shrinking past
+that fraction of its size, and put it in a `Gtk.ScrolledWindow` to scroll wide diagrams
+instead. It also sets its accessible label and description
 from the diagram's title and `accTitle`/`accDescr`. Parsing is cheap and layouts are
 cached per diagram and font, so recreating views while a document is edited is fine.
 

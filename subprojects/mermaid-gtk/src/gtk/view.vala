@@ -4,13 +4,14 @@ namespace Mermaid {
 
     /*
      * Shows a diagram. It is drawn at the widget's font size and shrinks to
-     * fit the width it gets, like an image.
+     * fit the width it gets, like an image, down to min_scale.
      */
     public class View : Gtk.Widget {
         Diagram _diagram;
         Scene? scene;
         double scene_font_px;
         Gdk.RGBA? _accent;
+        int allocated_width = -1;
 
         public Diagram diagram {
             get { return _diagram; }
@@ -30,6 +31,14 @@ namespace Mermaid {
             }
         }
 
+        /*
+         * How far the diagram may shrink to fit, as a fraction of its size:
+         * 0 lets it shrink freely, 1 keeps it at full size. Its minimum width
+         * follows, so put the view in a Gtk.ScrolledWindow to scroll wide
+         * diagrams rather than shrink their text past reading.
+         */
+        public double min_scale { get; set; default = 0; }
+
         static construct {
             set_css_name ("mermaid-diagram");
             set_accessible_role (Gtk.AccessibleRole.IMG);
@@ -41,6 +50,7 @@ namespace Mermaid {
 
         construct {
             overflow = Gtk.Overflow.HIDDEN;
+            notify["min-scale"].connect (queue_resize);
         }
 
         /* The font size in pixels that the scene is drawn at. */
@@ -96,19 +106,37 @@ namespace Mermaid {
             double w = s.width * k, h = s.height * k;
             minimum_baseline = natural_baseline = -1;
             if (orientation == Gtk.Orientation.HORIZONTAL) {
-                minimum = (int) Math.ceil (double.min (w, 48));
+                minimum = (int) Math.ceil (double.min (w, double.max (48, w * min_scale)));
                 natural = (int) Math.ceil (w);
             } else {
-                double fit = for_size >= 0 && w > 0 ? double.min (1, for_size / w) : 1;
+                // A Gtk.ScrolledWindow that scrolls sideways asks for the
+                // height without a width; the last allocated width is the best guess.
+                int width = for_size >= 0 ? for_size : allocated_width;
+                double fit = width >= 0 ? fit_scale (w, width) : 1;
                 minimum = natural = (int) Math.ceil (h * fit);
             }
+        }
+
+        public override void size_allocate (int width, int height, int baseline) {
+            if (width != allocated_width) {
+                allocated_width = width;
+                Idle.add (() => {
+                    queue_resize ();
+                    return GLib.Source.REMOVE;
+                });
+            }
+        }
+
+        /* The scale that fits a diagram this wide into the width, at most 1. */
+        double fit_scale (double w, double width) {
+            return w > 0 ? double.max (double.min (1, width / w), double.min (min_scale, 1)) : 1;
         }
 
         public override void snapshot (Gtk.Snapshot snapshot) {
             var s = ensure_scene ();
             double k = scale ();
             double w = s.width * k;
-            double fit = w > 0 ? double.min (1, get_width () / w) : 1;
+            double fit = fit_scale (w, get_width ());
             double total = k * fit;
             double x = (get_width () - s.width * total) / 2;
             var palette = new Palette.for_widget (this, _accent);
