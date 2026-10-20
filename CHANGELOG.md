@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.2.0...v0.3.0) (2026-10-20)
+
+
+### Features
+
+* draft notes and selection across the whole note ([#7](https://github.com/jefersondaniel/markdown-viewer/issues/7)) ([04a5c51](https://github.com/jefersondaniel/markdown-viewer/commit/04a5c51affb0d2afd79f5b5e7433234e500adaa6))
+
 ## [0.2.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.1.1...v0.2.0) (2026-10-19)
 
 
