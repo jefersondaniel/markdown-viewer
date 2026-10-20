@@ -5,12 +5,12 @@ libadwaita. Open a folder to browse its Markdown files in the sidebar, then read
 edit them. Markdown is parsed and rendered by the app itself into native widgets:
 no web engine and no HTML library.
 
-![A note shown in View mode, with the folder tree in the sidebar](data/screenshots/view.png)
+![A note with a flowchart shown in View mode, with the folder tree in the sidebar](data/screenshots/view.png)
 
 <table>
   <tr>
-    <td><img src="data/screenshots/side-by-side.png" alt="Editing a note side by side with its preview"></td>
-    <td><img src="data/screenshots/dark.png" alt="A recipe shown in dark mode"></td>
+    <td><img src="data/screenshots/side-by-side.png" alt="Editing a note and its flowchart side by side with the preview"></td>
+    <td><img src="data/screenshots/dark.png" alt="A recipe with a pie chart shown in dark mode"></td>
   </tr>
   <tr>
     <td align="center">Edit and preview side by side</td>
