@@ -41,10 +41,6 @@ namespace Mermaid {
                 sum += v;
             }
 
-            var outer = new Path ();
-            outer.ellipse (cx, cy, radius + 1, radius + 1);
-            scene.add_shape (outer, Paint (Ink.NONE), Paint (Ink.LINE), 2);
-
             // Slices start at the top and go clockwise. Slices under 1% are left out.
             var section_style = TextStyle (17);
             double angle = -Math.PI / 2;
@@ -63,6 +59,8 @@ namespace Mermaid {
                     slice.arc (cx, cy, radius, radius, angle, a1, false);
                     slice.close ();
                 }
+                // Mermaid also rings the pie in black, which only shows on light
+                // backgrounds. Slices are just set apart by gaps here.
                 scene.add_shape (slice, Paint.palette (i), Paint (Ink.BACKGROUND), 2);
 
                 if (Math.round (fraction * 100) > 0) {
@@ -112,9 +110,9 @@ namespace Mermaid {
                 // the margin below it empty. Give the title a gap of its own
                 // below it instead, and trim the margin.
                 double pie_top = TITLE_MARGIN + size.height + TITLE_GAP;
-                scene.translate (0, pie_top - (cy - radius - 1));
+                scene.translate (0, pie_top - (cy - radius));
                 scene.add_text (markup, cx, TITLE_MARGIN + size.height / 2, title_style);
-                height = pie_top + 2 * (radius + 1) + TITLE_MARGIN;
+                height = pie_top + 2 * radius + TITLE_MARGIN;
                 double left = cx - size.width / 2;
                 if (left < 0) {
                     scene.translate (-left, 0);

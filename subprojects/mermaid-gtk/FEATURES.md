@@ -236,7 +236,7 @@ rather than identical to Mermaid's own output.
 
 | ID | Feature | Status | Notes |
 |:--|:--|:--|:--|
-| `pie.header` | `pie` | ✅ Supported | |
+| `pie.header` | `pie` | ✅ Supported | Without the black ring that Mermaid draws around the chart, which only shows on light backgrounds. |
 | `pie.title` | `pie title …` and `title …` | ✅ Supported | With more space between the title and the chart than Mermaid leaves. |
 | `pie.show-data` | `showData` | ✅ Supported | |
 | `pie.values` | `"Label" : value` | ✅ Supported | Slices under 1% are left out, as in Mermaid. |
