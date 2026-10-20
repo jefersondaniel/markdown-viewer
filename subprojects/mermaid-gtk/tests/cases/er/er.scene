@@ -24,19 +24,19 @@ text 376.0,368.0 center 16.0 "lives at"
 shape fill=background M682.0,250.5 L712.4,250.5 L712.4,270.5 L682.0,270.5 Z
 text 697.2,260.5 center 16.0 "has"
 shape fill=#ffdd66ff stroke=node_stroke/1.0 M8.0,200.5 L300.8,200.5 L300.8,320.5 L8.0,320.5 Z
-text 154.4,218.5 center 16.0 "<b>CUSTOMER</b>"
+text 154.4,218.5 center 16.0 color=#333333ff "<b>CUSTOMER</b>"
 shape fill=background stroke=node_stroke/0.5 M8.0,236.5 L300.8,236.5 L300.8,264.5 L8.0,264.5 Z
-text 16.0,250.5 start 16.0 "string"
-text 84.8,250.5 start 16.0 "name"
+text 16.0,250.5 start 16.0 color=#333333ff "string"
+text 84.8,250.5 start 16.0 color=#333333ff "name"
 shape fill=group_fill stroke=node_stroke/0.5 M8.0,264.5 L300.8,264.5 L300.8,292.5 L8.0,292.5 Z
-text 16.0,278.5 start 16.0 "int"
-text 84.8,278.5 start 16.0 "id"
-text 162.4,278.5 start 16.0 "PK"
-text 231.2,278.5 start 16.0 "the key"
+text 16.0,278.5 start 16.0 color=#333333ff "int"
+text 84.8,278.5 start 16.0 color=#333333ff "id"
+text 162.4,278.5 start 16.0 color=#333333ff "PK"
+text 231.2,278.5 start 16.0 color=#333333ff "the key"
 shape fill=background stroke=node_stroke/0.5 M8.0,292.5 L300.8,292.5 L300.8,320.5 L8.0,320.5 Z
-text 16.0,306.5 start 16.0 "int"
-text 84.8,306.5 start 16.0 "address"
-text 162.4,306.5 start 16.0 "FK, UK"
+text 16.0,306.5 start 16.0 color=#333333ff "int"
+text 84.8,306.5 start 16.0 color=#333333ff "address"
+text 162.4,306.5 start 16.0 color=#333333ff "FK, UK"
 shape fill=node_fill stroke=node_stroke/1.0 M486.6,115.5 L586.6,115.5 L586.6,190.5 L486.6,190.5 Z
 text 536.6,153.0 center 16.0 "<b>ORDER</b>"
 shape fill=node_fill stroke=node_stroke/1.0 M772.4,8.0 L881.6,8.0 L881.6,83.0 L772.4,83.0 Z

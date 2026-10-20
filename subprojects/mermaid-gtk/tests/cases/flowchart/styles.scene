@@ -1,16 +1,28 @@
 flowchart 
-scene 321.2 66.0
+scene 321.2 266.0
 shape stroke=#ff0000ff/3.0 M46.8,33.0 L51.0,33.0 C55.1,33.0 63.5,33.0 70.5,33.0 C77.5,33.0 83.1,33.0 86.0,33.0 L88.8,33.0
 shape fill=#ff0000ff stroke=#ff0000ff/1.0 M96.8,33.0 L87.8,37.5 L87.8,28.5 Z
 shape stroke=#00aa00ff/1.5 M135.6,33.0 L160.6,33.0 L177.6,33.0
 shape fill=#00aa00ff stroke=#00aa00ff/1.0 M185.6,33.0 L176.6,37.5 L176.6,28.5 Z
 shape stroke=line/1.5 M224.4,33.0 L228.6,33.0 C232.7,33.0 241.1,33.0 248.1,33.0 C255.1,33.0 260.7,33.0 263.6,33.0 L266.4,33.0
 shape fill=line stroke=line/1.0 M274.4,33.0 L265.4,37.5 L265.4,28.5 Z
+shape stroke=line/1.5 M46.8,133.0 L51.0,133.0 C55.1,133.0 63.5,133.0 70.5,133.0 C77.5,133.0 83.1,133.0 86.0,133.0 L88.8,133.0
+shape fill=line stroke=line/1.0 M96.8,133.0 L87.8,137.5 L87.8,128.5 Z
+shape stroke=line/1.5 M46.8,233.0 L51.0,233.0 C55.1,233.0 63.5,233.0 70.5,233.0 C77.5,233.0 83.1,233.0 86.0,233.0 L88.8,233.0
+shape fill=line stroke=line/1.0 M96.8,233.0 L87.8,237.5 L87.8,228.5 Z
 shape fill=#ff9966ff stroke=#333333ff/4.0 dashed M8.0,8.0 L46.8,8.0 L46.8,58.0 L8.0,58.0 Z
-text 27.4,33.0 center 16.0 "A"
+text 27.4,33.0 center 16.0 color=#ffffffff "A"
 shape fill=#99ccffff stroke=node_stroke/1.0 dashed M96.8,8.0 L135.6,8.0 L135.6,58.0 L96.8,58.0 Z
-text 116.2,33.0 center 16.0 "B"
+text 116.2,33.0 center 16.0 color=#333333ff "B"
 shape fill=#99ccffff stroke=node_stroke/1.0 dashed M185.6,8.0 L224.4,8.0 L224.4,58.0 L185.6,58.0 Z
-text 205.0,33.0 center 16.0 "C"
+text 205.0,33.0 center 16.0 color=#333333ff "C"
 shape fill=node_fill stroke=node_stroke/1.0 dashed M274.4,8.0 L313.2,8.0 L313.2,58.0 L274.4,58.0 Z
 text 293.8,33.0 center 16.0 "D"
+shape fill=#e8f5e8ff stroke=node_stroke/1.0 dashed M8.0,108.0 L46.8,108.0 L46.8,158.0 L8.0,158.0 Z
+text 27.4,133.0 center 16.0 color=#333333ff "E"
+shape fill=#1a5fb4ff stroke=node_stroke/1.0 dashed M96.8,108.0 L135.6,108.0 L135.6,158.0 L96.8,158.0 Z
+text 116.2,133.0 center 16.0 color=#ffffffff "F"
+shape fill=#ffe0b0ff stroke=node_stroke/1.0 dashed M8.0,208.0 L46.8,208.0 L46.8,258.0 L8.0,258.0 Z
+text 27.4,233.0 center 16.0 color=#aa0000ff "G"
+shape fill=#00000020 stroke=node_stroke/1.0 dashed M96.8,208.0 L135.6,208.0 L135.6,258.0 L96.8,258.0 Z
+text 116.2,233.0 center 16.0 "H"

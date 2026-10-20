@@ -309,9 +309,10 @@ namespace Mermaid {
         }
 
         public override string to_string () {
-            return "text %s,%s %s %s%s \"%s\"".printf (
+            return "text %s,%s %s %s%s%s \"%s\"".printf (
                 fmt (x), fmt (y), align.to_string ().replace ("MERMAID_ALIGN_", "").down (),
-                fmt (style.size), style.bold ? " bold" : "", markup.replace ("\n", "\\n"));
+                fmt (style.size), style.bold ? " bold" : "",
+                color.ink != Ink.TEXT ? " color=" + color.to_string () : "", markup.replace ("\n", "\\n"));
         }
     }
 

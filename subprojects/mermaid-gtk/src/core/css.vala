@@ -60,6 +60,21 @@ namespace Mermaid {
             }
         }
 
+        /*
+         * The color for text on this style's fill: the color it sets, or, when
+         * it only sets an opaque fill, dark or white text, whichever is easier
+         * to read on it. The default text color follows the light or dark
+         * style, and wouldn't be readable on every fill.
+         */
+        public Paint? text_color () {
+            if (color != null || fill == null || fill.ink != Ink.CUSTOM || (fill.rgba & 0xff) < 0x80) {
+                return color;
+            }
+            double l = Css.luminance (fill.rgba);
+            // Contrast ratios with #333333 (luminance 0.033) and with white.
+            return (l + 0.05) / 0.083 >= 1.05 / (l + 0.05) ? Paint.custom (0x333333ff) : Paint.custom ((uint32) 0xffffffff);
+        }
+
         public void merge (CssStyle other) {
             if (other.fill != null) {
                 fill = other.fill;
@@ -140,6 +155,16 @@ namespace Mermaid {
         };
 
         /* Parses a CSS color into 0xRRGGBBAA. */
+        /* The relative luminance of a 0xRRGGBBAA color, as in WCAG. */
+        internal double luminance (uint32 rgba) {
+            double[] c = { (rgba >> 24) & 0xff, (rgba >> 16) & 0xff, (rgba >> 8) & 0xff };
+            for (int i = 0; i < 3; i++) {
+                double v = c[i] / 255;
+                c[i] = v <= 0.04045 ? v / 12.92 : Math.pow ((v + 0.055) / 1.055, 2.4);
+            }
+            return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+        }
+
         internal bool parse_color (string value, out uint32 rgba) {
             string v = value.strip ().down ();
             rgba = 0;

@@ -6,11 +6,11 @@ shape stroke=line/1.0 dashed M113.5,48.0 L128.1,80.8 C142.7,113.5 172.0,179.0 19
 shape stroke=line/1.0 M163.8,278.0 L170.0,278.0 C176.3,278.0 188.7,278.0 199.1,277.3 C209.5,276.6 217.9,275.3 222.0,274.6 L226.2,273.9
 shape fill=background stroke=line/1.0 M149.8,278.0 L163.8,271.0 L163.8,285.0 Z
 shape fill=#ff99ffff stroke=node_stroke/1.0 M59.4,246.0 L149.8,246.0 L149.8,310.0 L59.4,310.0 Z
-text 104.6,266.0 center 16.0 "<b>Triangle</b>"
+text 104.6,266.0 center 16.0 color=#333333ff "<b>Triangle</b>"
 shape stroke=node_stroke/1.0 M59.4,286.0 L149.8,286.0
 shape stroke=node_stroke/1.0 M59.4,298.0 L149.8,298.0
 shape fill=#ff6666ff stroke=node_stroke/1.0 M226.2,236.0 L299.0,236.0 L299.0,300.0 L226.2,300.0 Z
-text 262.6,256.0 center 16.0 "<b>Square</b>"
+text 262.6,256.0 center 16.0 color=#333333ff "<b>Square</b>"
 shape stroke=node_stroke/1.0 M226.2,276.0 L299.0,276.0
 shape stroke=node_stroke/1.0 M226.2,288.0 L299.0,288.0
 shape fill=note_fill stroke=note_stroke/1.0 M33.0,98.0 L176.2,98.0 L176.2,138.0 L33.0,138.0 Z

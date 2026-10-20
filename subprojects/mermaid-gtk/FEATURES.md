@@ -121,6 +121,7 @@ rather than identical to Mermaid's own output.
 | `flowchart.class` | `class a,b name` | ✅ Supported | |
 | `flowchart.class-shorthand` | `A:::name` | ✅ Supported | |
 | `flowchart.class-default` | `classDef default` | ✅ Supported | |
+| `flowchart.text-contrast` | Text on a `fill` with no `color` | ✅ Supported | Dark or white, whichever is easier to read on the fill, so it works in light and dark style. Mermaid keeps the theme's text color. |
 | `flowchart.link-style` | `linkStyle 0,1 …` and `linkStyle default …` | ✅ Supported | |
 | `flowchart.link-style.curve` | `linkStyle … interpolate …` | 🟡 Partial | `basis`, `linear` and the `step` curves; others are drawn as `basis`. |
 | `flowchart.markdown-strings` | `` "`**Markdown** strings`" `` | ✅ Supported | Bold, italic and automatic wrapping. |

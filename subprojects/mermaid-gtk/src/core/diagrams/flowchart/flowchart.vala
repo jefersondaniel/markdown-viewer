@@ -88,15 +88,20 @@ namespace Mermaid {
             return result;
         }
 
-        static void apply_style (GNode n, CssStyle s) {
+        /* Applies a node's class styles and then its own style. */
+        static void apply_style (GNode n, CssStyle classes, CssStyle own) {
+            var s = new CssStyle ();
+            s.merge (classes);
+            s.merge (own);
             if (s.fill != null) {
                 n.fill = s.fill;
             }
             if (s.stroke != null) {
                 n.stroke = s.stroke;
             }
-            if (s.color != null) {
-                n.color = s.color;
+            var text = s.text_color ();
+            if (text != null) {
+                n.color = text;
             }
             if (s.stroke_width >= 0) {
                 n.stroke_width = s.stroke_width;
@@ -135,8 +140,7 @@ namespace Mermaid {
                 n.label = label_markup (sg.title, sg.markdown);
                 n.parent = parent_of[sg.id];
                 n.dir = sg.dir;
-                apply_style (n, compiled_style (sg.classes, false));
-                apply_style (n, sg.style);
+                apply_style (n, compiled_style (sg.classes, false), sg.style);
                 r.add_node (n);
             }
 
@@ -144,8 +148,7 @@ namespace Mermaid {
                 if (r.node (v.id) != null) {
                     // A subgraph with the same id: styles apply to it.
                     var g = r.node (v.id);
-                    apply_style (g, compiled_style (v.classes, false));
-                    apply_style (g, v.style);
+                    apply_style (g, compiled_style (v.classes, false), v.style);
                     continue;
                 }
                 var n = new GNode (v.id);
@@ -155,8 +158,7 @@ namespace Mermaid {
                     n.wrap_width = 200;
                 }
                 n.parent = parent_of[v.id];
-                apply_style (n, compiled_style (v.classes, true));
-                apply_style (n, v.style);
+                apply_style (n, compiled_style (v.classes, true), v.style);
                 r.add_node (n);
             }
 

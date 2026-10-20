@@ -216,8 +216,9 @@ namespace Mermaid {
             if (style.stroke != null) {
                 n.stroke = style.stroke;
             }
-            if (style.color != null) {
-                n.color = style.color;
+            var text = style.text_color ();
+            if (text != null) {
+                n.color = text;
             }
             if (style.stroke_width >= 0) {
                 n.stroke_width = style.stroke_width;
