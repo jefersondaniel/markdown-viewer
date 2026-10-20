@@ -1,0 +1,15 @@
+# Keeps the actions pinned in the workflows up to date. Their commits are pinned
+# so a moved tag can't change what runs, and Dependabot bumps them with the
+# version comments next to them.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+      include: scope
+    groups:
+      actions:
+        patterns: ["*"]
