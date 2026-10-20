@@ -1,18 +1,18 @@
 pie Pets adopted
-scene 614.9 450.0
-shape stroke=line/2.0 M411.0,225.0 C411.0,327.7 327.7,411.0 225.0,411.0 C122.3,411.0 39.0,327.7 39.0,225.0 C39.0,122.3 122.3,39.0 225.0,39.0 C327.7,39.0 411.0,122.3 411.0,225.0 Z
-shape fill=palette0 stroke=background/2.0 M225.0,225.0 L225.0,40.0 C304.4,40.0 375.0,90.7 400.3,166.0 C425.7,241.2 400.1,324.3 336.9,372.3 C273.6,420.4 186.8,422.7 121.1,378.0 C55.4,333.4 25.5,251.8 46.8,175.3 Z
-shape fill=palette1 stroke=background/2.0 M225.0,225.0 L46.8,175.3 C65.5,108.0 120.6,57.0 189.2,43.5 Z
-shape fill=palette2 stroke=background/2.0 M225.0,225.0 L189.2,43.5 C200.9,41.2 212.8,40.0 224.8,40.0 Z
-text 308.9,335.5 center 17.0 "79%"
-text 130.7,123.2 center 17.0 "18%"
-text 211.4,86.9 center 17.0 "3%"
-shape fill=palette0 stroke=palette0/1.0 M441.0,181.0 L459.0,181.0 L459.0,199.0 L441.0,199.0 Z
-text 463.0,190.0 start 17.0 "Dogs [386]"
-shape fill=palette1 stroke=palette1/1.0 M441.0,203.0 L459.0,203.0 L459.0,221.0 L441.0,221.0 Z
-text 463.0,212.0 start 17.0 "Cats [85.5]"
-shape fill=palette2 stroke=palette2/1.0 M441.0,225.0 L459.0,225.0 L459.0,243.0 L441.0,243.0 Z
-text 463.0,234.0 start 17.0 "Rats [15]"
-shape fill=palette3 stroke=palette3/1.0 M441.0,247.0 L459.0,247.0 L459.0,265.0 L441.0,265.0 Z
-text 463.0,256.0 start 17.0 "Tiny [0.1]"
-text 225.0,25.0 center 25.0 "Pets adopted"
+scene 614.9 450.9
+shape stroke=line/2.0 M411.0,245.2 C411.0,348.0 327.7,431.2 225.0,431.2 C122.3,431.2 39.0,348.0 39.0,245.3 C39.0,142.5 122.3,59.3 225.0,59.2 C327.7,59.2 411.0,142.5 411.0,245.2 Z
+shape fill=palette0 stroke=background/2.0 M225.0,245.2 L225.0,60.2 C304.4,60.2 375.0,110.9 400.3,186.2 C425.7,261.5 400.1,344.5 336.9,392.6 C273.6,440.6 186.8,442.9 121.1,398.3 C55.4,353.7 25.5,272.1 46.8,195.6 Z
+shape fill=palette1 stroke=background/2.0 M225.0,245.2 L46.8,195.6 C65.5,128.3 120.6,77.3 189.2,63.8 Z
+shape fill=palette2 stroke=background/2.0 M225.0,245.2 L189.2,63.8 C200.9,61.4 212.8,60.3 224.8,60.3 Z
+text 308.9,355.7 center 17.0 "79%"
+text 130.7,143.4 center 17.0 "18%"
+text 211.4,107.2 center 17.0 "3%"
+shape fill=palette0 stroke=palette0/1.0 M441.0,201.2 L459.0,201.2 L459.0,219.2 L441.0,219.2 Z
+text 463.0,210.2 start 17.0 "Dogs [386]"
+shape fill=palette1 stroke=palette1/1.0 M441.0,223.2 L459.0,223.2 L459.0,241.2 L441.0,241.2 Z
+text 463.0,232.2 start 17.0 "Cats [85.5]"
+shape fill=palette2 stroke=palette2/1.0 M441.0,245.2 L459.0,245.2 L459.0,263.2 L441.0,263.2 Z
+text 463.0,254.2 start 17.0 "Rats [15]"
+shape fill=palette3 stroke=palette3/1.0 M441.0,267.2 L459.0,267.2 L459.0,285.2 L441.0,285.2 Z
+text 463.0,276.2 start 17.0 "Tiny [0.1]"
+text 225.0,23.6 center 25.0 "Pets adopted"

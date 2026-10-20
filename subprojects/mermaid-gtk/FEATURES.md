@@ -237,7 +237,7 @@ rather than identical to Mermaid's own output.
 | ID | Feature | Status | Notes |
 |:--|:--|:--|:--|
 | `pie.header` | `pie` | ✅ Supported | |
-| `pie.title` | `pie title …` and `title …` | ✅ Supported | |
+| `pie.title` | `pie title …` and `title …` | ✅ Supported | With more space between the title and the chart than Mermaid leaves. |
 | `pie.show-data` | `showData` | ✅ Supported | |
 | `pie.values` | `"Label" : value` | ✅ Supported | Slices under 1% are left out, as in Mermaid. |
 | `pie.config` | `textPosition`, `donutHole` and other options | ❌ Not yet | |

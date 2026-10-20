@@ -21,6 +21,9 @@ namespace Mermaid {
         const double MARGIN = 40;
         const double LEGEND_RECT_SIZE = 18;
         const double LEGEND_SPACING = 4;
+        /* Space above the title and below the pie, and between them. */
+        const double TITLE_MARGIN = 8;
+        const double TITLE_GAP = 20;
         /* Where the percentages go, as a fraction of the radius. */
         const double TEXT_POSITION = 0.75;
 
@@ -105,7 +108,13 @@ namespace Mermaid {
                 var title_style = TextStyle (25);
                 string markup = Label.escape (title);
                 var size = measure (m, markup, title_style);
-                scene.add_text (markup, cx, cy - (HEIGHT - 50) / 2, title_style);
+                // Mermaid leaves the title only a few pixels above the pie, and
+                // the margin below it empty. Give the title a gap of its own
+                // below it instead, and trim the margin.
+                double pie_top = TITLE_MARGIN + size.height + TITLE_GAP;
+                scene.translate (0, pie_top - (cy - radius - 1));
+                scene.add_text (markup, cx, TITLE_MARGIN + size.height / 2, title_style);
+                height = pie_top + 2 * (radius + 1) + TITLE_MARGIN;
                 double left = cx - size.width / 2;
                 if (left < 0) {
                     scene.translate (-left, 0);
