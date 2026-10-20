@@ -1,0 +1,19 @@
+%% features: flowchart.subgraph flowchart.subgraph.title flowchart.subgraph.nested flowchart.subgraph.edges flowchart.subgraph.direction flowchart.subgraph.isolated
+flowchart TB
+  c1 --> a2
+  subgraph one [First]
+    a1 --> a2
+  end
+  subgraph two
+    direction LR
+    b1 --> b2
+    subgraph inner [Inner group]
+      i1 --> i2
+    end
+  end
+  subgraph three
+    c1 --> c2
+  end
+  one --> two
+  three --> two
+  two --> c2

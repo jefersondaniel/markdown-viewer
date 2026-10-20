@@ -1,0 +1,118 @@
+class 
+scene 1206.4 214.0
+shape stroke=line/1.0 M38.0,86.0 L38.0,89.5 C38.0,93.0 38.0,100.0 38.0,109.3 C38.0,118.7 38.0,130.3 38.0,136.2 L38.0,142.0
+shape fill=background stroke=line/1.0 M38.0,72.0 L45.0,86.0 L31.0,86.0 Z
+shape stroke=line/1.0 M148.0,92.0 L148.0,94.5 C148.0,97.0 148.0,102.0 148.0,110.3 C148.0,118.7 148.0,130.3 148.0,136.2 L148.0,142.0
+shape fill=line stroke=line/1.0 M148.0,72.0 L154.0,82.0 L148.0,92.0 L142.0,82.0 Z
+shape stroke=line/1.0 M258.0,92.0 L258.0,94.5 C258.0,97.0 258.0,102.0 258.0,110.3 C258.0,118.7 258.0,130.3 258.0,136.2 L258.0,142.0
+shape fill=background stroke=line/1.0 M258.0,72.0 L264.0,82.0 L258.0,92.0 L252.0,82.0 Z
+shape stroke=line/1.0 M368.0,72.0 L368.0,77.8 C368.0,83.7 368.0,95.3 368.0,104.7 C368.0,114.0 368.0,121.0 368.0,124.5 L368.0,128.0
+shape fill=line stroke=line/1.0 M368.0,142.0 L362.0,130.0 L368.0,133.0 L374.0,130.0 Z
+shape stroke=line/1.0 M478.0,72.0 L478.0,77.8 C478.0,83.7 478.0,95.3 478.0,107.0 C478.0,118.7 478.0,130.3 478.0,136.2 L478.0,142.0
+shape stroke=line/1.0 dashed M588.0,72.0 L588.0,77.8 C588.0,83.7 588.0,95.3 588.0,104.7 C588.0,114.0 588.0,121.0 588.0,124.5 L588.0,128.0
+shape fill=line stroke=line/1.0 M588.0,142.0 L582.0,130.0 L588.0,133.0 L594.0,130.0 Z
+shape stroke=line/1.0 dashed M698.0,72.0 L698.0,77.8 C698.0,83.7 698.0,95.3 698.0,104.7 C698.0,114.0 698.0,121.0 698.0,124.5 L698.0,128.0
+shape fill=background stroke=line/1.0 M698.0,142.0 L691.0,128.0 L705.0,128.0 Z
+shape stroke=line/1.0 dashed M808.0,72.0 L808.0,77.8 C808.0,83.7 808.0,95.3 808.0,107.0 C808.0,118.7 808.0,130.3 808.0,136.2 L808.0,142.0
+shape stroke=line/1.0 M918.0,86.0 L918.0,89.5 C918.0,93.0 918.0,100.0 918.0,109.3 C918.0,118.7 918.0,130.3 918.0,136.2 L918.0,142.0
+shape fill=background stroke=line/1.0 M923.0,77.0 C923.0,79.8 920.8,82.0 918.0,82.0 C915.2,82.0 913.0,79.8 913.0,77.0 C913.0,74.2 915.2,72.0 918.0,72.0 C920.8,72.0 923.0,74.2 923.0,77.0 Z
+shape stroke=line/1.0 M918.0,82.0 L918.0,86.0
+shape stroke=line/1.0 M1028.0,86.0 L1028.0,89.5 C1028.0,93.0 1028.0,100.0 1028.0,107.0 C1028.0,114.0 1028.0,121.0 1028.0,124.5 L1028.0,128.0
+shape fill=background stroke=line/1.0 M1028.0,72.0 L1035.0,86.0 L1021.0,86.0 Z
+shape fill=background stroke=line/1.0 M1028.0,142.0 L1021.0,128.0 L1035.0,128.0 Z
+shape stroke=line/1.0 M1153.2,72.0 L1153.2,77.8 C1153.2,83.7 1153.2,95.3 1153.2,104.7 C1153.2,114.0 1153.2,121.0 1153.2,124.5 L1153.2,128.0
+shape fill=line stroke=line/1.0 M1153.2,142.0 L1147.2,130.0 L1153.2,133.0 L1159.2,130.0 Z
+shape fill=background M348.4,97.0 L387.6,97.0 L387.6,117.0 L348.4,117.0 Z
+text 368.0,107.0 center 16.0 "uses"
+shape fill=background M1124.8,97.0 L1181.6,97.0 L1181.6,117.0 L1124.8,117.0 Z
+text 1153.2,107.0 center 16.0 "places"
+text 1143.5,90.0 center 13.6 "1"
+text 1174.2,124.0 center 13.6 "0..*"
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,8.0 L68.0,8.0 L68.0,72.0 L8.0,72.0 Z
+text 38.0,28.0 center 16.0 "<b>A</b>"
+shape stroke=node_stroke/1.0 M8.0,48.0 L68.0,48.0
+shape stroke=node_stroke/1.0 M8.0,60.0 L68.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,142.0 L68.0,142.0 L68.0,206.0 L8.0,206.0 Z
+text 38.0,162.0 center 16.0 "<b>B</b>"
+shape stroke=node_stroke/1.0 M8.0,182.0 L68.0,182.0
+shape stroke=node_stroke/1.0 M8.0,194.0 L68.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M118.0,8.0 L178.0,8.0 L178.0,72.0 L118.0,72.0 Z
+text 148.0,28.0 center 16.0 "<b>C</b>"
+shape stroke=node_stroke/1.0 M118.0,48.0 L178.0,48.0
+shape stroke=node_stroke/1.0 M118.0,60.0 L178.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M118.0,142.0 L178.0,142.0 L178.0,206.0 L118.0,206.0 Z
+text 148.0,162.0 center 16.0 "<b>D</b>"
+shape stroke=node_stroke/1.0 M118.0,182.0 L178.0,182.0
+shape stroke=node_stroke/1.0 M118.0,194.0 L178.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M228.0,8.0 L288.0,8.0 L288.0,72.0 L228.0,72.0 Z
+text 258.0,28.0 center 16.0 "<b>E</b>"
+shape stroke=node_stroke/1.0 M228.0,48.0 L288.0,48.0
+shape stroke=node_stroke/1.0 M228.0,60.0 L288.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M228.0,142.0 L288.0,142.0 L288.0,206.0 L228.0,206.0 Z
+text 258.0,162.0 center 16.0 "<b>F</b>"
+shape stroke=node_stroke/1.0 M228.0,182.0 L288.0,182.0
+shape stroke=node_stroke/1.0 M228.0,194.0 L288.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M338.0,8.0 L398.0,8.0 L398.0,72.0 L338.0,72.0 Z
+text 368.0,28.0 center 16.0 "<b>G</b>"
+shape stroke=node_stroke/1.0 M338.0,48.0 L398.0,48.0
+shape stroke=node_stroke/1.0 M338.0,60.0 L398.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M338.0,142.0 L398.0,142.0 L398.0,206.0 L338.0,206.0 Z
+text 368.0,162.0 center 16.0 "<b>H</b>"
+shape stroke=node_stroke/1.0 M338.0,182.0 L398.0,182.0
+shape stroke=node_stroke/1.0 M338.0,194.0 L398.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M448.0,8.0 L508.0,8.0 L508.0,72.0 L448.0,72.0 Z
+text 478.0,28.0 center 16.0 "<b>I</b>"
+shape stroke=node_stroke/1.0 M448.0,48.0 L508.0,48.0
+shape stroke=node_stroke/1.0 M448.0,60.0 L508.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M448.0,142.0 L508.0,142.0 L508.0,206.0 L448.0,206.0 Z
+text 478.0,162.0 center 16.0 "<b>J</b>"
+shape stroke=node_stroke/1.0 M448.0,182.0 L508.0,182.0
+shape stroke=node_stroke/1.0 M448.0,194.0 L508.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M558.0,8.0 L618.0,8.0 L618.0,72.0 L558.0,72.0 Z
+text 588.0,28.0 center 16.0 "<b>K</b>"
+shape stroke=node_stroke/1.0 M558.0,48.0 L618.0,48.0
+shape stroke=node_stroke/1.0 M558.0,60.0 L618.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M558.0,142.0 L618.0,142.0 L618.0,206.0 L558.0,206.0 Z
+text 588.0,162.0 center 16.0 "<b>L</b>"
+shape stroke=node_stroke/1.0 M558.0,182.0 L618.0,182.0
+shape stroke=node_stroke/1.0 M558.0,194.0 L618.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M668.0,8.0 L728.0,8.0 L728.0,72.0 L668.0,72.0 Z
+text 698.0,28.0 center 16.0 "<b>M</b>"
+shape stroke=node_stroke/1.0 M668.0,48.0 L728.0,48.0
+shape stroke=node_stroke/1.0 M668.0,60.0 L728.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M668.0,142.0 L728.0,142.0 L728.0,206.0 L668.0,206.0 Z
+text 698.0,162.0 center 16.0 "<b>N</b>"
+shape stroke=node_stroke/1.0 M668.0,182.0 L728.0,182.0
+shape stroke=node_stroke/1.0 M668.0,194.0 L728.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M778.0,8.0 L838.0,8.0 L838.0,72.0 L778.0,72.0 Z
+text 808.0,28.0 center 16.0 "<b>O</b>"
+shape stroke=node_stroke/1.0 M778.0,48.0 L838.0,48.0
+shape stroke=node_stroke/1.0 M778.0,60.0 L838.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M778.0,142.0 L838.0,142.0 L838.0,206.0 L778.0,206.0 Z
+text 808.0,162.0 center 16.0 "<b>P</b>"
+shape stroke=node_stroke/1.0 M778.0,182.0 L838.0,182.0
+shape stroke=node_stroke/1.0 M778.0,194.0 L838.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M888.0,8.0 L948.0,8.0 L948.0,72.0 L888.0,72.0 Z
+text 918.0,28.0 center 16.0 "<b>Q</b>"
+shape stroke=node_stroke/1.0 M888.0,48.0 L948.0,48.0
+shape stroke=node_stroke/1.0 M888.0,60.0 L948.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M888.0,142.0 L948.0,142.0 L948.0,206.0 L888.0,206.0 Z
+text 918.0,162.0 center 16.0 "<b>R</b>"
+shape stroke=node_stroke/1.0 M888.0,182.0 L948.0,182.0
+shape stroke=node_stroke/1.0 M888.0,194.0 L948.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M998.0,8.0 L1058.0,8.0 L1058.0,72.0 L998.0,72.0 Z
+text 1028.0,28.0 center 16.0 "<b>S</b>"
+shape stroke=node_stroke/1.0 M998.0,48.0 L1058.0,48.0
+shape stroke=node_stroke/1.0 M998.0,60.0 L1058.0,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M998.0,142.0 L1058.0,142.0 L1058.0,206.0 L998.0,206.0 Z
+text 1028.0,162.0 center 16.0 "<b>T</b>"
+shape stroke=node_stroke/1.0 M998.0,182.0 L1058.0,182.0
+shape stroke=node_stroke/1.0 M998.0,194.0 L1058.0,194.0
+shape fill=node_fill stroke=node_stroke/1.0 M1108.0,8.0 L1198.4,8.0 L1198.4,72.0 L1108.0,72.0 Z
+text 1153.2,28.0 center 16.0 "<b>Customer</b>"
+shape stroke=node_stroke/1.0 M1108.0,48.0 L1198.4,48.0
+shape stroke=node_stroke/1.0 M1108.0,60.0 L1198.4,60.0
+shape fill=node_fill stroke=node_stroke/1.0 M1121.2,142.0 L1185.2,142.0 L1185.2,206.0 L1121.2,206.0 Z
+text 1153.2,162.0 center 16.0 "<b>Order</b>"
+shape stroke=node_stroke/1.0 M1121.2,182.0 L1185.2,182.0
+shape stroke=node_stroke/1.0 M1121.2,194.0 L1185.2,194.0

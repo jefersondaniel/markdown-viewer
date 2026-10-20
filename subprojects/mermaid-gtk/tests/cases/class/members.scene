@@ -1,0 +1,20 @@
+class 
+scene 642.0 260.0
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,8.0 L186.4,8.0 L186.4,252.0 L8.0,252.0 Z
+text 97.2,38.0 center 16.0 "<small>«abstract»</small>\n<b>Animal</b>"
+shape stroke=node_stroke/1.0 M8.0,68.0 L186.4,68.0
+text 18.0,114.0 start 16.0 "+String name\n-int age\n#List&lt;String&gt; tags\n+String color"
+shape stroke=node_stroke/1.0 M8.0,160.0 L186.4,160.0
+text 18.0,206.0 start 16.0 "&lt;package()\n+eat(food) : bool\n<u>+count() : int</u>\n<i>+speak()</i>"
+shape fill=node_fill stroke=node_stroke/1.0 M236.4,88.0 L353.2,88.0 L353.2,172.0 L236.4,172.0 Z
+text 294.8,118.0 center 16.0 "<small>«interface»</small>\n<b>Box&lt;T&gt;</b>"
+shape stroke=node_stroke/1.0 M236.4,148.0 L353.2,148.0
+shape stroke=node_stroke/1.0 M236.4,160.0 L353.2,160.0
+shape fill=node_fill stroke=node_stroke/1.0 M403.2,98.0 L484.8,98.0 L484.8,162.0 L403.2,162.0 Z
+text 444.0,118.0 center 16.0 "<b>A shape</b>"
+shape stroke=node_stroke/1.0 M403.2,138.0 L484.8,138.0
+shape stroke=node_stroke/1.0 M403.2,150.0 L484.8,150.0
+shape fill=node_fill stroke=node_stroke/1.0 M534.8,98.0 L634.0,98.0 L634.0,162.0 L534.8,162.0 Z
+text 584.4,118.0 center 16.0 "<b>Odd name!</b>"
+shape stroke=node_stroke/1.0 M534.8,138.0 L634.0,138.0
+shape stroke=node_stroke/1.0 M534.8,150.0 L634.0,150.0

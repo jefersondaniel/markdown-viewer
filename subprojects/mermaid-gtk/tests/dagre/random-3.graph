@@ -1,0 +1,15 @@
+graph LR 30 10 70 8 8
+node n0 97 20
+node n1 136 50
+node n2 53 55
+node n3 49 32
+node n4 111 50
+node n5 89 55
+node n6 80 45
+node n7 101 29
+edge n2 n6 e1 1 1 0 0 c
+edge n4 n0 e2 2 2 59 23 l
+edge n2 n5 e3 2 2 37 18 r
+edge n6 n3 e4 1 1 0 0 c
+edge n1 n5 e5 1 1 44 19 l
+edge n1 n7 e6 1 1 29 10 l

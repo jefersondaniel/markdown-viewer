@@ -1,0 +1,9 @@
+flowchart Order flow
+scene 143.6 104.5
+shape stroke=line/1.5 M46.8,71.5 L51.0,71.5 C55.1,71.5 63.5,71.5 70.5,71.5 C77.5,71.5 83.1,71.5 86.0,71.5 L88.8,71.5
+shape fill=line stroke=line/1.0 M96.8,71.5 L87.8,76.0 L87.8,67.0 Z
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,46.5 L46.8,46.5 L46.8,96.5 L8.0,96.5 Z
+text 27.4,71.5 center 16.0 "A"
+shape fill=node_fill stroke=node_stroke/1.0 M96.8,46.5 L135.6,46.5 L135.6,96.5 L96.8,96.5 Z
+text 116.2,71.5 center 16.0 "B"
+text 71.8,19.2 center 18.0 bold "Order flow"

@@ -1,0 +1,17 @@
+%% features: class.header class.definition class.members class.members-colon class.methods class.visibility class.static-abstract class.generics class.annotations class.label class.backticks
+classDiagram
+  class Animal {
+    <<abstract>>
+    +String name
+    -int age
+    #List~String~ tags
+    ~package()
+    +eat(food) bool
+    +count()$ int
+    +speak()*
+  }
+  Animal : +String color
+  class Box~T~
+  <<interface>> Box
+  class Shape["A shape"]
+  class `Odd name!`

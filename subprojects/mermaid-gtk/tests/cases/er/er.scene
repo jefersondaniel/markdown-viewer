@@ -1,0 +1,47 @@
+er 
+scene 889.6 413.5
+shape stroke=line/1.0 M278.1,200.5 L294.4,192.6 C310.7,184.7 343.4,168.8 378.1,160.9 C412.9,153.0 449.7,153.0 468.2,153.0 L486.6,153.0
+shape stroke=line/1.5 M281.8,189.8 L288.8,204.2 M287.2,187.2 L294.2,201.6
+shape stroke=line/1.5 M486.6,161.0 L470.6,153.0 L486.6,145.0 M466.6,161.0 L466.6,145.0
+shape fill=background stroke=line/1.5 M462.6,153.0 C462.6,155.8 460.4,158.0 457.6,158.0 C454.8,158.0 452.6,155.8 452.6,153.0 C452.6,150.2 454.8,148.0 457.6,148.0 C460.4,148.0 462.6,150.2 462.6,153.0 Z
+shape stroke=line/1.0 M586.6,119.5 L605.0,107.2 C623.5,94.9 660.3,70.2 691.3,57.8 C722.3,45.5 747.3,45.5 759.9,45.5 L772.4,45.5
+shape stroke=line/1.5 M588.8,108.4 L597.7,121.7 M593.8,105.1 L602.7,118.4
+shape stroke=line/1.5 M772.4,53.5 L756.4,45.5 L772.4,37.5 M752.4,53.5 L752.4,37.5
+shape stroke=line/1.0 dashed M278.1,320.5 L294.4,328.4 C310.7,336.3 343.4,352.2 372.2,360.1 C401.1,368.0 426.1,368.0 438.7,368.0 L451.2,368.0
+shape stroke=line/1.5 M281.6,313.3 L292.5,327.5 L274.6,327.7 M299.6,322.0 L292.6,336.4
+shape stroke=line/1.5 M451.2,376.0 L435.2,368.0 L451.2,360.0 M431.2,376.0 L431.2,360.0
+shape stroke=line/1.0 M586.6,186.5 L605.0,198.8 C623.5,211.1 660.3,235.8 692.1,248.2 C723.8,260.5 750.4,260.5 763.7,260.5 L777.0,260.5
+shape stroke=line/1.5 M597.7,184.3 L588.8,197.6
+shape fill=background stroke=line/1.5 M605.7,195.9 C605.7,198.7 603.5,200.9 600.7,200.9 C598.0,200.9 595.7,198.7 595.7,195.9 C595.7,193.2 598.0,190.9 600.7,190.9 C603.5,190.9 605.7,193.2 605.7,195.9 Z
+shape stroke=line/1.5 M769.0,268.5 L769.0,252.5
+shape fill=background stroke=line/1.5 M765.0,260.5 C765.0,263.3 762.8,265.5 760.0,265.5 C757.2,265.5 755.0,263.3 755.0,260.5 C755.0,257.7 757.2,255.5 760.0,255.5 C762.8,255.5 765.0,257.7 765.0,260.5 Z
+shape fill=background M347.6,143.0 L404.4,143.0 L404.4,163.0 L347.6,163.0 Z
+text 376.0,153.0 center 16.0 "places"
+shape fill=background M660.0,35.5 L734.4,35.5 L734.4,55.5 L660.0,55.5 Z
+text 697.2,45.5 center 16.0 "contains"
+shape fill=background M338.8,358.0 L413.2,358.0 L413.2,378.0 L338.8,378.0 Z
+text 376.0,368.0 center 16.0 "lives at"
+shape fill=background M682.0,250.5 L712.4,250.5 L712.4,270.5 L682.0,270.5 Z
+text 697.2,260.5 center 16.0 "has"
+shape fill=#ffdd66ff stroke=node_stroke/1.0 M8.0,200.5 L300.8,200.5 L300.8,320.5 L8.0,320.5 Z
+text 154.4,218.5 center 16.0 "<b>CUSTOMER</b>"
+shape fill=background stroke=node_stroke/0.5 M8.0,236.5 L300.8,236.5 L300.8,264.5 L8.0,264.5 Z
+text 16.0,250.5 start 16.0 "string"
+text 84.8,250.5 start 16.0 "name"
+shape fill=group_fill stroke=node_stroke/0.5 M8.0,264.5 L300.8,264.5 L300.8,292.5 L8.0,292.5 Z
+text 16.0,278.5 start 16.0 "int"
+text 84.8,278.5 start 16.0 "id"
+text 162.4,278.5 start 16.0 "PK"
+text 231.2,278.5 start 16.0 "the key"
+shape fill=background stroke=node_stroke/0.5 M8.0,292.5 L300.8,292.5 L300.8,320.5 L8.0,320.5 Z
+text 16.0,306.5 start 16.0 "int"
+text 84.8,306.5 start 16.0 "address"
+text 162.4,306.5 start 16.0 "FK, UK"
+shape fill=node_fill stroke=node_stroke/1.0 M486.6,115.5 L586.6,115.5 L586.6,190.5 L486.6,190.5 Z
+text 536.6,153.0 center 16.0 "<b>ORDER</b>"
+shape fill=node_fill stroke=node_stroke/1.0 M772.4,8.0 L881.6,8.0 L881.6,83.0 L772.4,83.0 Z
+text 827.0,45.5 center 16.0 "<b>LINE-ITEM</b>"
+shape fill=node_fill stroke=node_stroke/1.0 M451.2,330.5 L622.0,330.5 L622.0,405.5 L451.2,405.5 Z
+text 536.6,368.0 center 16.0 "<b>Delivery address</b>"
+shape fill=node_fill stroke=node_stroke/1.0 M777.0,223.0 L877.0,223.0 L877.0,298.0 L777.0,298.0 Z
+text 827.0,260.5 center 16.0 "<b>INVOICE</b>"

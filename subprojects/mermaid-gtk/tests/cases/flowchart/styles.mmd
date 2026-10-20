@@ -1,0 +1,11 @@
+%% features: flowchart.style flowchart.class-def flowchart.class flowchart.class-shorthand flowchart.class-default flowchart.link-style flowchart.link-style.curve
+flowchart LR
+  A:::warm --> B --> C --> D
+  style A stroke:#333,stroke-width:4px
+  classDef warm fill:#f96,color:#fff
+  classDef default stroke-dasharray: 4 2
+  classDef cool fill:#9cf
+  class B,C cool
+  linkStyle 0 stroke:#f00,stroke-width:3px
+  linkStyle 1 interpolate linear stroke:#0a0
+  linkStyle default color:blue

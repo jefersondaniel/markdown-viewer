@@ -1,0 +1,12 @@
+flowchart 
+scene 143.6 166.0
+shape stroke=line/1.5 M52.4,54.8 L48.2,59.5 C44.1,64.2 35.7,73.6 31.6,81.1 C27.4,88.7 27.4,94.3 27.4,97.2 L27.4,100.0
+shape fill=line stroke=line/1.0 M27.4,108.0 L22.9,99.0 L31.9,99.0 Z
+shape stroke=line/1.5 M91.2,54.8 L95.4,59.5 C99.5,64.2 107.9,73.6 112.0,81.1 C116.2,88.7 116.2,94.3 116.2,97.2 L116.2,100.0
+shape fill=line stroke=line/1.0 M116.2,108.0 L111.7,99.0 L120.7,99.0 Z
+shape fill=node_fill stroke=node_stroke/1.0 M52.4,8.0 L91.2,8.0 L91.2,58.0 L52.4,58.0 Z
+text 71.8,33.0 center 16.0 "A"
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,108.0 L46.8,108.0 L46.8,158.0 L8.0,158.0 Z
+text 27.4,133.0 center 16.0 "B"
+shape fill=node_fill stroke=node_stroke/1.0 M96.8,108.0 L135.6,108.0 L135.6,158.0 L96.8,158.0 Z
+text 116.2,133.0 center 16.0 "C"

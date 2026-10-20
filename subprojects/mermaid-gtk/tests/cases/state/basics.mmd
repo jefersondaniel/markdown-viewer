@@ -1,0 +1,11 @@
+%% features: state.header state.transition state.label state.start-end state.description state.alias
+stateDiagram-v2
+  [*] --> Still
+  Still --> [*]
+  Still --> Moving : push
+  Moving --> Still : stop
+  state "Crashed badly" as Crash
+  Moving --> Crash
+  Crash --> [*]
+  Still : Not moving
+  Still : Parked

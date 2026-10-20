@@ -1,0 +1,12 @@
+flowchart 
+scene 178.0 286.0
+shape stroke=line/1.5 M89.0,78.0 L89.0,82.2 C89.0,86.3 89.0,94.7 89.0,101.7 C89.0,108.7 89.0,114.3 89.0,117.2 L89.0,120.0
+shape fill=line stroke=line/1.0 M89.0,128.0 L84.5,119.0 L93.5,119.0 Z
+shape stroke=line/1.5 M89.0,178.0 L89.0,182.2 C89.0,186.3 89.0,194.7 89.0,201.7 C89.0,208.7 89.0,214.3 89.0,217.2 L89.0,220.0
+shape fill=line stroke=line/1.0 M89.0,228.0 L84.5,219.0 L93.5,219.0 Z
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,8.0 L170.0,8.0 L170.0,78.0 L8.0,78.0 Z
+text 89.0,43.0 center 16.0 "<b>Bold</b> and <i>italic</i>\non two lines"
+shape fill=node_fill stroke=node_stroke/1.0 M8.0,128.0 L170.0,128.0 L170.0,178.0 L8.0,178.0 Z
+text 89.0,153.0 center 16.0 "A &quot;quote&quot; and ♥"
+shape fill=node_fill stroke=node_stroke/1.0 M21.2,228.0 L156.8,228.0 L156.8,278.0 L21.2,278.0 Z
+text 89.0,253.0 center 16.0 "Ünïcödé ✓ 日本"

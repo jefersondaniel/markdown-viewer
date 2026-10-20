@@ -1,0 +1,11 @@
+graph BT 30 20 50 8 8
+node n0 30 28
+node n1 51 52
+node n2 46 45
+node n3 102 21
+node n4 78 51
+node n5 78 44
+node n6 83 56
+node n7 44 45
+edge n3 n7 e1 3 1 0 0 l
+edge n1 n6 e2 3 1 18 22 c

@@ -1,0 +1,19 @@
+%% features: state.composite state.composite-nested state.concurrency state.direction
+stateDiagram-v2
+  direction LR
+  [*] --> First
+  state First {
+    [*] --> Second
+    state Second {
+      [*] --> second
+      second --> [*]
+    }
+  }
+  state Active {
+    [*] --> NumOff
+    NumOff --> NumOn
+    --
+    [*] --> CapsOff
+    CapsOff --> CapsOn
+  }
+  First --> Active

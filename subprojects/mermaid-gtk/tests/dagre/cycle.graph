@@ -1,0 +1,10 @@
+graph TB 50 20 50 8 8
+node a 80 40
+node b 60 40
+node c 100 30
+node d 50 50
+edge a b - 1 1 0 0 c
+edge a c - 1 1 30 20 c
+edge b d - 1 1 0 0 c
+edge c d - 1 1 0 0 c
+edge d a - 1 1 0 0 c
