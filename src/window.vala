@@ -405,22 +405,47 @@ namespace Notes {
 
         void reload_buffer (string text) {
             var buffer = editor.buffer;
-            Gtk.TextIter cursor;
-            buffer.get_iter_at_mark (out cursor, buffer.get_insert ());
-            int offset = cursor.get_offset ();
-
             loading = true;
             buffer.begin_irreversible_action ();
-            buffer.text = text;
+            replace_changed_text (buffer, text);
             buffer.end_irreversible_action ();
             loading = false;
             saved_text = text;
             set_disk_conflict (false);
 
-            buffer.get_iter_at_offset (out cursor, offset);
-            buffer.place_cursor (cursor);
             preview_dirty = true;
             render_preview (true);
+        }
+
+        /* Replaces only the part that differs. Setting the whole text would move
+         * the editor back to the top and the cursor away from where it was. */
+        static void replace_changed_text (Gtk.TextBuffer buffer, string text) {
+            string old = buffer.text;
+            int max = int.min (old.length, text.length);
+            int prefix = 0;
+            while (prefix < max && old[prefix] == text[prefix]) {
+                prefix++;
+            }
+            // Don't split a multibyte character.
+            while (prefix > 0 && prefix < text.length && (text[prefix] & 0xC0) == 0x80) {
+                prefix--;
+            }
+            int suffix = 0;
+            while (suffix < max - prefix && old[old.length - 1 - suffix] == text[text.length - 1 - suffix]) {
+                suffix++;
+            }
+            while (suffix > 0 && (text[text.length - suffix] & 0xC0) == 0x80) {
+                suffix--;
+            }
+            if (prefix == old.length && prefix == text.length) {
+                return;
+            }
+
+            Gtk.TextIter start, end;
+            buffer.get_iter_at_offset (out start, (int) old.char_count (prefix));
+            buffer.get_iter_at_offset (out end, (int) old.char_count (old.length - suffix));
+            buffer.delete (ref start, ref end);
+            buffer.insert (ref start, text.substring (prefix, text.length - suffix - prefix), -1);
         }
 
         /* Saves the current document and returns it, or null for a draft. */
