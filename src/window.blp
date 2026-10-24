@@ -5,19 +5,23 @@ using Adw 1;
 // only at the end, and the zoom row in the note menu needs its menu when it is added.
 menu primary_menu {
   section {
-    item (_("New Note"), "win.new-note")
-    item (_("New Folder…"), "win.new-folder")
-  }
-
-  section {
-    item (_("Open Folder…"), "win.open-folder")
-    item (_("Open File…"), "win.open")
-  }
-
-  section {
     item (_("Markdown Guide"), "win.guide")
     item (_("Keyboard Shortcuts"), "win.keyboard-shortcuts")
     item (_("About Markdown Viewer"), "app.about")
+  }
+}
+
+menu new_menu {
+  section {
+    item (_("New Note"), "win.new-note")
+    item (_("New Folder…"), "win.new-folder")
+  }
+}
+
+menu open_menu {
+  section {
+    item (_("Open Folder…"), "win.open-folder")
+    item (_("Open File…"), "win.open")
   }
 }
 
@@ -83,7 +87,6 @@ template $NotesWindow: Adw.ApplicationWindow {
 
     setters {
       split_view.collapsed: true;
-      open_button.visible: false;
       find_button.visible: false;
     }
   }
@@ -102,10 +105,19 @@ template $NotesWindow: Adw.ApplicationWindow {
           };
 
           [start]
-          Gtk.Button {
+          Adw.SplitButton {
             icon-name: "document-new-symbolic";
             tooltip-text: _("New Note");
+            dropdown-tooltip: _("New Note or Folder");
             action-name: "win.new-note";
+            menu-model: new_menu;
+          }
+
+          [start]
+          Gtk.MenuButton {
+            icon-name: "document-open-symbolic";
+            tooltip-text: _("Open");
+            menu-model: open_menu;
           }
 
           [end]
@@ -174,13 +186,6 @@ template $NotesWindow: Adw.ApplicationWindow {
             icon-name: "sidebar-show-symbolic";
             tooltip-text: _("Toggle Sidebar");
             active: bind split_view.show-sidebar bidirectional;
-          }
-
-          [start]
-          Gtk.Button open_button {
-            icon-name: "document-open-symbolic";
-            tooltip-text: _("Open File…");
-            action-name: "win.open";
           }
 
           [end]

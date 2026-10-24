@@ -68,6 +68,8 @@ ninja -C build install
 
 - **Sidebar:** the open folder as a tree of subfolders and Markdown files (`.md`,
   `.markdown`). Hidden files are left out. It updates by itself when files change on disk.
+  The buttons above it create notes and folders, and open another folder or a single file.
+  The menu above the note holds what applies to that note.
 - **Search:** the field at the top of the sidebar finds files by name or content.
 - **Right-click:** a file or folder offers Rename, Show in Files and Move to Trash.
   On folders it also offers New Note and New Folder.
