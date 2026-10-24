@@ -15,6 +15,7 @@ namespace Notes {
         [GtkChild] unowned FileTree file_tree;
         [GtkChild] unowned Adw.WindowTitle window_title;
         [GtkChild] unowned Gtk.SearchBar find_bar;
+        [GtkChild] unowned Adw.Banner disk_banner;
         [GtkChild] unowned Gtk.SearchEntry find_entry;
         [GtkChild] unowned Gtk.Label find_count;
         [GtkChild] unowned Gtk.Stack content_stack;
@@ -83,6 +84,12 @@ namespace Notes {
         File? draft_dir;
         bool close_confirmed;
         FileMonitor? doc_monitor;
+        /* Where another program renamed the open file to, until it is checked. */
+        File? doc_moved_to;
+        /* The file changed on disk while there were unsaved edits here. Nothing is
+         * saved until the user picks which version to keep. */
+        bool disk_conflict;
+        /* The text of the document as last read from or written to disk. */
         string saved_text = "";
         GenericArray<File> history = new GenericArray<File> ();
 
@@ -258,9 +265,9 @@ namespace Notes {
         }
 
         protected override bool close_request () {
-            if (!close_confirmed && unsaved_draft ()) {
-                confirm_leave_draft.begin ((obj, res) => {
-                    if (confirm_leave_draft.end (res)) {
+            if (!close_confirmed && must_confirm_leave ()) {
+                confirm_leave.begin ((obj, res) => {
+                    if (confirm_leave.end (res)) {
                         close_confirmed = true;
                         close ();
                     }
@@ -344,9 +351,9 @@ namespace Notes {
                 return;
             }
 
-            if (unsaved_draft ()) {
-                confirm_leave_draft.begin ((obj, res) => {
-                    if (confirm_leave_draft.end (res)) {
+            if (must_confirm_leave ()) {
+                confirm_leave.begin ((obj, res) => {
+                    if (confirm_leave.end (res)) {
                         open_file (file, push_history);
                     } else {
                         file_tree.select_file (doc_file);
@@ -406,6 +413,7 @@ namespace Notes {
             buffer.end_irreversible_action ();
             loading = false;
             saved_text = text;
+            set_disk_conflict (false);
 
             buffer.get_iter_at_offset (out cursor, offset);
             buffer.place_cursor (cursor);
@@ -428,10 +436,8 @@ namespace Notes {
         }
 
         void close_document () {
-            if (doc_monitor != null) {
-                doc_monitor.cancel ();
-                doc_monitor = null;
-            }
+            stop_watching ();
+            set_disk_conflict (false);
             doc_file = null;
             doc_read_only = false;
             draft = false;
@@ -449,29 +455,58 @@ namespace Notes {
             file_tree.select_file (null);
         }
 
-        /* Notice when another program changes, moves or deletes the open file. */
+        /* Notice when another program changes, moves or deletes the open file. The
+         * monitor also sees editors that save by writing a new file and renaming it
+         * over the old one. */
         void watch_document () {
-            if (doc_monitor != null) {
-                doc_monitor.cancel ();
-                doc_monitor = null;
-            }
+            stop_watching ();
             if (doc_file == null || doc_read_only) {
                 return;
             }
             try {
                 doc_monitor = doc_file.monitor_file (FileMonitorFlags.WATCH_MOVES);
-                doc_monitor.changed.connect (() => {
-                    if (disk_check_source != 0) {
-                        Source.remove (disk_check_source);
+                doc_monitor.changed.connect ((file, other, event) => {
+                    if (event == FileMonitorEvent.RENAMED && other != null && doc_file != null
+                        && file.equal (doc_file)) {
+                        doc_moved_to = other;
                     }
-                    disk_check_source = Timeout.add (250, () => {
-                        disk_check_source = 0;
-                        check_document_on_disk ();
-                        return Source.REMOVE;
-                    });
+                    schedule_disk_check ();
                 });
             } catch (Error e) {
                 warning ("Could not watch %s: %s", doc_file.get_basename (), e.message);
+            }
+        }
+
+        void stop_watching () {
+            if (doc_monitor != null) {
+                doc_monitor.cancel ();
+                doc_monitor = null;
+            }
+            if (disk_check_source != 0) {
+                Source.remove (disk_check_source);
+                disk_check_source = 0;
+            }
+            doc_moved_to = null;
+        }
+
+        /* Changes usually come in bursts, so look at the file once they settle. */
+        void schedule_disk_check () {
+            if (disk_check_source != 0) {
+                Source.remove (disk_check_source);
+            }
+            disk_check_source = Timeout.add (250, () => {
+                disk_check_source = 0;
+                check_document_on_disk ();
+                return Source.REMOVE;
+            });
+        }
+
+        /* Runs a check that is still waiting, so decisions use what is on disk now. */
+        void flush_disk_check () {
+            if (disk_check_source != 0) {
+                Source.remove (disk_check_source);
+                disk_check_source = 0;
+                check_document_on_disk ();
             }
         }
 
@@ -479,16 +514,107 @@ namespace Notes {
             if (doc_file == null || doc_read_only) {
                 return;
             }
+            File? moved_to = doc_moved_to;
+            doc_moved_to = null;
             if (!doc_file.query_exists ()) {
-                string name = doc_file.get_basename ();
+                if (moved_to != null && moved_to.query_exists ()) {
+                    relocate_document (doc_file, moved_to);
+                } else {
+                    document_removed ();
+                }
+                return;
+            }
+            string? text = Files.read_text (doc_file);
+            if (text == null) {
+                return;
+            }
+            string current = editor.buffer.text;
+            if (text == saved_text) {
+                // Our own save, or the other program put back what was saved last.
+                if (disk_conflict) {
+                    set_disk_conflict (false);
+                    schedule_save ();
+                }
+            } else if (current == saved_text) {
+                // Nothing would be lost, so just show the new version.
+                reload_buffer (text);
+            } else if (current == text) {
+                saved_text = text;
+                set_disk_conflict (false);
+            } else {
+                set_disk_conflict (true);
+            }
+        }
+
+        /* The open file was deleted, or moved somewhere it can't be followed. */
+        void document_removed () {
+            string name = doc_file.get_basename ();
+            if (editor.buffer.text == saved_text) {
                 close_document ();
                 toast (_("“%s” was moved or deleted").printf (name));
                 return;
             }
-            // Pick up changes made elsewhere, unless there are unsaved edits here.
-            string? text = Files.read_text (doc_file);
-            if (text != null && text != saved_text && editor.buffer.text == saved_text) {
-                reload_buffer (text);
+            // Writing the file back would undo the deletion, so keep the edits as a draft.
+            File? dir = doc_file.get_parent ();
+            stop_watching ();
+            set_disk_conflict (false);
+            doc_file = null;
+            draft = true;
+            draft_dir = dir != null && dir.query_exists () ? dir : null;
+            saved_text = "";
+            update_header ();
+            update_actions ();
+            file_tree.select_file (null);
+            toast (_("“%s” was moved or deleted, so your changes were kept in a draft").printf (name));
+        }
+
+        void set_disk_conflict (bool conflict) {
+            disk_conflict = conflict;
+            disk_banner.revealed = conflict;
+            if (conflict && save_source != 0) {
+                Source.remove (save_source);
+                save_source = 0;
+            }
+        }
+
+        [GtkCallback]
+        void on_disk_banner_clicked () {
+            resolve_disk_conflict.begin ();
+        }
+
+        /* Asks which version to keep after the file changed on disk while it had
+         * unsaved edits. Returns false if the user chose neither. */
+        async bool resolve_disk_conflict () {
+            var dialog = new Adw.AlertDialog (
+                _("Keep Your Changes?"),
+                _("“%s” was changed by another program while you were editing it. Reload it to see those changes, or keep yours and replace them.")
+                    .printf (doc_file.get_basename ()));
+            dialog.add_response ("cancel", _("_Cancel"));
+            dialog.add_response ("reload", _("_Discard and Reload"));
+            dialog.add_response ("keep", _("_Keep Changes"));
+            dialog.set_response_appearance ("reload", Adw.ResponseAppearance.DESTRUCTIVE);
+            dialog.set_response_appearance ("keep", Adw.ResponseAppearance.SUGGESTED);
+            dialog.default_response = "keep";
+            dialog.close_response = "cancel";
+
+            string response = yield dialog.choose (this, null);
+            if (!disk_conflict) {
+                return false;  // things changed while the dialog was open
+            }
+            switch (response) {
+            case "keep":
+                set_disk_conflict (false);
+                return save_now (true);
+            case "reload":
+                string? text = Files.read_text (doc_file);
+                if (text != null) {
+                    reload_buffer (text);
+                    return true;
+                }
+                check_document_on_disk ();
+                return false;
+            default:
+                return false;
             }
         }
 
@@ -568,6 +694,21 @@ namespace Notes {
             return draft && editor.buffer.text.strip () != "";
         }
 
+        /* Whether leaving the open document needs a decision first, because it is
+         * a draft with text or has edits that clash with changes on disk. */
+        bool must_confirm_leave () {
+            flush_disk_check ();
+            return unsaved_draft () || disk_conflict;
+        }
+
+        /* Asks what to do before leaving the open document. Returns false to stay. */
+        async bool confirm_leave () {
+            if (disk_conflict) {
+                return yield resolve_disk_conflict ();
+            }
+            return yield confirm_leave_draft ();
+        }
+
         /* The folder that relative links and images in the document point into. */
         File? doc_dir () {
             return doc_file != null ? doc_file.get_parent () : draft_dir;
@@ -576,6 +717,12 @@ namespace Notes {
         void schedule_save () {
             if (save_source != 0) {
                 Source.remove (save_source);
+                save_source = 0;
+            }
+            if (disk_conflict) {
+                // Undoing every edit ends the conflict, so look at the file again.
+                schedule_disk_check ();
+                return;
             }
             save_source = Timeout.add (700, () => {
                 save_source = 0;
@@ -584,7 +731,10 @@ namespace Notes {
             });
         }
 
-        bool save_now () {
+        /* Writes the open document. Unless `overwrite` is set, it doesn't replace
+         * changes another program made since the last save, and doesn't recreate
+         * the file if it was deleted. */
+        bool save_now (bool overwrite = false) {
             if (save_source != 0) {
                 Source.remove (save_source);
                 save_source = 0;
@@ -592,9 +742,27 @@ namespace Notes {
             if (doc_file == null || doc_read_only) {
                 return true;
             }
+            if (disk_conflict && !overwrite) {
+                return false;
+            }
             string text = editor.buffer.text;
             if (text == saved_text) {
                 return true;
+            }
+            if (!overwrite) {
+                if (!doc_file.query_exists ()) {
+                    schedule_disk_check ();
+                    return false;
+                }
+                string? on_disk = Files.read_text (doc_file);
+                if (on_disk != saved_text) {
+                    if (on_disk == text) {
+                        saved_text = text;
+                        return true;
+                    }
+                    set_disk_conflict (true);
+                    return false;
+                }
             }
             try {
                 doc_file.replace_contents (text.data, null, false, FileCreateFlags.NONE, null);
@@ -919,9 +1087,9 @@ namespace Notes {
 
         /* Opens a new, unsaved note. Nothing is written until it is saved. */
         void start_draft (File? dir, string text = "") {
-            if (unsaved_draft ()) {
-                confirm_leave_draft.begin ((obj, res) => {
-                    if (confirm_leave_draft.end (res)) {
+            if (must_confirm_leave ()) {
+                confirm_leave.begin ((obj, res) => {
+                    if (confirm_leave.end (res)) {
                         start_draft (dir, text);
                     }
                 });
@@ -931,10 +1099,7 @@ namespace Notes {
             if (previous != null) {
                 history.add (previous);
             }
-            if (doc_monitor != null) {
-                doc_monitor.cancel ();
-                doc_monitor = null;
-            }
+            stop_watching ();
             doc_file = null;
             doc_read_only = false;
             draft = true;
@@ -1126,6 +1291,14 @@ namespace Notes {
             if (draft) {
                 save_draft.begin ((obj, res) => {
                     if (save_draft.end (res)) {
+                        toast (_("Saved"));
+                    }
+                });
+                return;
+            }
+            if (disk_conflict) {
+                resolve_disk_conflict.begin ((obj, res) => {
+                    if (resolve_disk_conflict.end (res) && !disk_conflict) {
                         toast (_("Saved"));
                     }
                 });
