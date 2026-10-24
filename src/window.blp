@@ -301,6 +301,13 @@ template $NotesWindow: Adw.ApplicationWindow {
           };
         }
 
+        [top]
+        Adw.Banner disk_banner {
+          title: _("The file was changed by another program");
+          button-label: _("_Reload…");
+          button-clicked => $on_disk_banner_clicked();
+        }
+
         content: Gtk.Stack content_stack {
           transition-type: crossfade;
 

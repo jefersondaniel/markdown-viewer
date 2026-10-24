@@ -74,6 +74,10 @@ ninja -C build install
 - **Trash:** files go to the system trash, with Undo.
 - **Saving:** automatic, shortly after you stop typing, and when you switch files or
   close the window.
+- **Changes from other programs:** when another program changes the open file, the new
+  version is shown. If you were editing it at the same time, nothing is saved until you
+  choose whether to keep your changes or reload. A file that is renamed stays open, and
+  if it's deleted while you have unsaved changes, they're kept in a draft.
 - **New notes:** they start as drafts that exist only in the app. Ctrl+S, or Save… in
   the note menu, asks for a name and a folder (the first line is suggested). Leaving a
   draft that has text asks whether to save or discard it, and Discard in the note menu
