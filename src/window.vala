@@ -101,6 +101,8 @@ namespace Notes {
         uint save_source;
         uint render_source;
         uint disk_check_source;
+        uint scroll_restore_source;
+        ulong scroll_restore_handler;
 
         int zoom = 100;
         Gtk.CssProvider zoom_css = new Gtk.CssProvider ();
@@ -819,17 +821,32 @@ namespace Notes {
             renderer = r;
             match_index = -1;
 
+            stop_scroll_restore ();
             if (keep_scroll) {
                 // Restore the position once the new content has been measured.
-                ulong handler = adj.notify["upper"].connect (() => adj.value = position);
-                Timeout.add (250, () => {
-                    adj.disconnect (handler);
+                scroll_restore_handler = adj.notify["upper"].connect (() => adj.value = position);
+                scroll_restore_source = Timeout.add (250, () => {
+                    scroll_restore_source = 0;
+                    stop_scroll_restore ();
                     return Source.REMOVE;
                 });
             } else {
                 adj.value = 0;
             }
             update_find_count ();
+        }
+
+        /* A newer render or an explicit scroll replaces a pending restore, which
+         * would otherwise put back the old position, even from another note. */
+        void stop_scroll_restore () {
+            if (scroll_restore_source != 0) {
+                Source.remove (scroll_restore_source);
+                scroll_restore_source = 0;
+            }
+            if (scroll_restore_handler != 0) {
+                preview_scroller.vadjustment.disconnect (scroll_restore_handler);
+                scroll_restore_handler = 0;
+            }
         }
 
         void on_link_activated (string uri) {
@@ -901,6 +918,7 @@ namespace Notes {
         void scroll_to_widget (Gtk.Widget widget) {
             Graphene.Point point;
             if (widget.compute_point (preview_clamp, Graphene.Point () { x = 0, y = 0 }, out point)) {
+                stop_scroll_restore ();
                 preview_scroller.vadjustment.value = point.y - 16;
             }
         }
