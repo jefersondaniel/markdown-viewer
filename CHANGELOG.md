@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.5.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.4.0...v0.5.0) (2026-10-24)
+
+
+### Features
+
+* ask before replacing a note that another program changed ([#11](https://github.com/jefersondaniel/markdown-viewer/issues/11)) ([18af009](https://github.com/jefersondaniel/markdown-viewer/commit/18af00967d5ba3741f53e4bf7953d0a16f5b2d9d))
+* **window:** group new and open buttons above the sidebar ([#12](https://github.com/jefersondaniel/markdown-viewer/issues/12)) ([8bc8029](https://github.com/jefersondaniel/markdown-viewer/commit/8bc8029375b2afbb5f8fde0377ff5cbcd9b7e00a))
+
+
+### Bug Fixes
+
+* stop the note view from jumping to unexpected places ([#14](https://github.com/jefersondaniel/markdown-viewer/issues/14)) ([d68ca34](https://github.com/jefersondaniel/markdown-viewer/commit/d68ca3454ef21305a2062a311e5972dbfab41492))
+
 ## [0.4.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.3.0...v0.4.0) (2026-10-20)
 
 
