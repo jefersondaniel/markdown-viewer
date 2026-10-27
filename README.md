@@ -106,8 +106,9 @@ CommonMark plus the GitHub extensions:
   errors, are shown as code with a short explanation.
 
 A paragraph written directly under the first `#` title, with no blank line in
-between, is shown as a subtitle. The **Markdown Guide** in the main menu shows
-everything in action.
+between, is shown as a subtitle. A line break inside a paragraph is kept, as in
+GitHub comments, so lines don't need to end with two spaces. The **Markdown
+Guide** in the main menu shows everything in action.
 
 ### Supported HTML
 

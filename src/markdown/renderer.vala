@@ -269,7 +269,7 @@ namespace Markdown {
                 if (c.kind == InlineKind.TEXT || c.kind == InlineKind.CODE) {
                     holder.append (c.text);
                 } else if (c.kind == InlineKind.SOFTBREAK || c.kind == InlineKind.HARDBREAK) {
-                    holder.append_c (' ');
+                    holder.append_c ('\n');
                 } else {
                     holder.append (c.plain_text ());
                 }
@@ -294,9 +294,8 @@ namespace Markdown {
             case InlineKind.TEXT:
                 sb.append (escape (node.text));
                 break;
+            // Like GitHub comments and most note apps, a line break in the source is kept.
             case InlineKind.SOFTBREAK:
-                sb.append_c (' ');
-                break;
             case InlineKind.HARDBREAK:
                 sb.append_c ('\n');
                 break;
