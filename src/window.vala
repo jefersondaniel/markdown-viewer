@@ -68,6 +68,7 @@ namespace Notes {
         Markdown.Renderer? renderer;
         Gtk.Overlay preview_overlay = new Gtk.Overlay ();
         TextSelection selection;
+        FindHighlight find_highlight;
         GtkSource.SearchSettings search_settings;
         GtkSource.SearchContext search_context;
 
@@ -131,8 +132,9 @@ namespace Notes {
             editor.set_dark (style.dark);
             style.notify["dark"].connect (() => {
                 editor.set_dark (style.dark);
-                preview_dirty = true;
-                render_preview (true);
+                if (renderer != null) {
+                    renderer.dark = style.dark;
+                }
             });
 
             string saved_folder = state.get_string ("folder");
@@ -165,7 +167,14 @@ namespace Notes {
 
         void setup_preview () {
             preview_clamp.child = preview_overlay;
+            // Below the selection, which is drawn over the matches.
+            find_highlight = new FindHighlight (preview_overlay);
             selection = new TextSelection (preview_overlay, preview_scroller);
+            selection.select_all_requested.connect (() => {
+                if (renderer != null) {
+                    renderer.finish ();
+                }
+            });
         }
 
         void setup_sidebar () {
@@ -187,8 +196,8 @@ namespace Notes {
                     run_find ();
                 } else {
                     search_settings.search_text = null;
-                    preview_dirty = true;
-                    render_preview (true);
+                    find_highlight.query = "";
+                    match_index = -1;
                 }
             });
             find_entry.search_changed.connect (run_find);
@@ -378,7 +387,8 @@ namespace Notes {
             doc_file = file;
             doc_read_only = file.get_uri () == GUIDE_URI;
             draft = false;
-            reload_buffer (text);
+            drop_preview ();
+            reload_buffer (text, false);
             Gtk.TextIter start;
             editor.buffer.get_start_iter (out start);
             editor.buffer.place_cursor (start);
@@ -391,9 +401,6 @@ namespace Notes {
             update_actions ();
             preview_dirty = true;
             render_preview (false);
-            if (find_bar.search_mode_enabled) {
-                run_find ();
-            }
             file_tree.select_file (doc_read_only ? null : doc_file);
             if (!doc_read_only) {
                 state.set_string ("last-file", file.get_path ());
@@ -403,7 +410,9 @@ namespace Notes {
             }
         }
 
-        void reload_buffer (string text) {
+        /* Shows `text` in the editor as the saved version of the note. The
+         * preview is rendered again unless the caller does it itself. */
+        void reload_buffer (string text, bool render = true) {
             var buffer = editor.buffer;
             loading = true;
             buffer.begin_irreversible_action ();
@@ -414,7 +423,9 @@ namespace Notes {
             set_disk_conflict (false);
 
             preview_dirty = true;
-            render_preview (true);
+            if (render) {
+                render_preview (true);
+            }
         }
 
         /* Replaces only the part that differs. Setting the whole text would move
@@ -472,9 +483,7 @@ namespace Notes {
             editor.buffer.text = "";
             loading = false;
             saved_text = "";
-            preview_overlay.child = null;
-            selection.set_segments (null);
-            renderer = null;
+            drop_preview ();
             content_stack.visible_child_name = "empty";
             update_header ();
             update_actions ();
@@ -825,25 +834,41 @@ namespace Notes {
             preview_dirty = false;
 
             var doc = new Markdown.Parser ().parse (editor.buffer.text);
-            var r = new Markdown.Renderer ();
-            r.base_dir = doc_dir ();
-            r.dark = Adw.StyleManager.get_default ().dark;
-            r.read_only = doc_read_only;
-            r.highlight = find_bar.search_mode_enabled ? find_entry.text : "";
-            r.link_activated.connect (on_link_activated);
-            r.task_toggled.connect (on_task_toggled);
-
-            var content = r.render (doc);
-            content.margin_start = 32;
-            content.margin_end = 32;
-            content.margin_top = 20;
-            content.margin_bottom = 64;
+            File? dir = doc_dir ();
+            if (renderer != null && (renderer.read_only != doc_read_only
+                                     || (renderer.base_dir == null) != (dir == null)
+                                     || (dir != null && !dir.equal (renderer.base_dir)))) {
+                drop_preview ();
+            }
+            // The renderer stays for as long as the note is open, and updates
+            // only the parts of the preview that change.
+            bool created = renderer == null;
+            if (created) {
+                var r = new Markdown.Renderer ();
+                r.base_dir = dir;
+                r.dark = Adw.StyleManager.get_default ().dark;
+                r.read_only = doc_read_only;
+                r.link_activated.connect (on_link_activated);
+                r.task_toggled.connect (on_task_toggled);
+                r.appended.connect (on_preview_appended);
+                r.content.margin_start = 32;
+                r.content.margin_end = 32;
+                r.content.margin_top = 20;
+                r.content.margin_bottom = 64;
+                preview_overlay.child = r.content;
+                renderer = r;
+            }
 
             var adj = preview_scroller.vadjustment;
             double position = adj.value;
-            preview_overlay.child = content;
-            selection.set_segments (r.segments);
-            renderer = r;
+            renderer.update (doc);
+            // A long note is rendered a little at a time when it's new. Searching
+            // it, or going back to where it was scrolled to, needs all of it.
+            if (find_highlight.query != "" || (created && keep_scroll && position > 0)) {
+                renderer.finish ();
+            }
+            selection.set_segments (renderer.segments);
+            find_highlight.set_labels (renderer.labels);
             match_index = -1;
 
             stop_scroll_restore ();
@@ -859,6 +884,22 @@ namespace Notes {
                 adj.value = 0;
             }
             update_find_count ();
+        }
+
+        /* More of a long note was rendered. A selection in what was there stays. */
+        void on_preview_appended () {
+            selection.set_segments (renderer.segments, true);
+            find_highlight.set_labels (renderer.labels);
+            update_find_count ();
+        }
+
+        /* Throws the rendered note away, for another note. */
+        void drop_preview () {
+            preview_overlay.child = null;
+            selection.set_segments (null);
+            find_highlight.set_labels (null);
+            renderer = null;
+            preview_dirty = true;
         }
 
         /* A newer render or an explicit scroll replaces a pending restore, which
@@ -934,6 +975,7 @@ namespace Notes {
             if (renderer == null) {
                 return;
             }
+            renderer.finish ();
             var widget = renderer.get_anchor (Uri.unescape_string (slug) ?? slug);
             if (widget != null) {
                 scroll_to_widget (widget);
@@ -941,6 +983,22 @@ namespace Notes {
         }
 
         void scroll_to_widget (Gtk.Widget widget) {
+            // A part of the note that was just rendered gets its place in the next frame.
+            if (widget.get_width () == 0 && widget.get_height () == 0) {
+                stop_scroll_restore ();
+                var clock = get_frame_clock ();
+                if (clock != null) {
+                    ulong handler = 0;
+                    handler = clock.after_paint.connect (() => {
+                        clock.disconnect (handler);
+                        if (widget.get_width () > 0 || widget.get_height () > 0) {
+                            scroll_to_widget (widget);
+                        }
+                    });
+                    clock.request_phase (Gdk.FrameClockPhase.AFTER_PAINT);
+                }
+                return;
+            }
             Graphene.Point point;
             if (widget.compute_point (preview_clamp, Graphene.Point () { x = 0, y = 0 }, out point)) {
                 stop_scroll_restore ();
@@ -1065,8 +1123,12 @@ namespace Notes {
         void run_find () {
             string query = find_entry.text;
             search_settings.search_text = query != "" ? query : null;
-            preview_dirty = true;
-            render_preview (true);
+            // The preview is searched where it is: matches are drawn over it.
+            if (query != "" && renderer != null && renderer.finish ()) {
+                find_highlight.set_labels (renderer.labels);
+            }
+            find_highlight.query = query;
+            match_index = -1;
             update_find_count ();
         }
 
@@ -1076,7 +1138,7 @@ namespace Notes {
                 return;
             }
             bool in_editor = editor_scroller.visible && !preview_scroller.visible;
-            int count = in_editor ? search_context.occurrences_count : (renderer != null ? renderer.match_count : 0);
+            int count = in_editor ? search_context.occurrences_count : find_highlight.count;
             if (count < 0) {
                 return;  // still counting
             }
@@ -1097,10 +1159,10 @@ namespace Notes {
                     editor.scroll_to_mark (buffer.get_insert (), 0.2, false, 0, 0);
                 }
             }
-            if (preview_scroller.visible && renderer != null && renderer.match_widgets.length > 0) {
-                int n = (int) renderer.match_widgets.length;
+            if (preview_scroller.visible && find_highlight.matched_labels > 0) {
+                int n = find_highlight.matched_labels;
                 match_index = ((match_index + (forward ? 1 : -1)) % n + n) % n;
-                scroll_to_widget (renderer.match_widgets[match_index]);
+                scroll_to_widget (find_highlight.matched_label (match_index));
             }
         }
 
@@ -1147,6 +1209,7 @@ namespace Notes {
             doc_read_only = false;
             draft = true;
             draft_dir = dir;
+            drop_preview ();
             reload_buffer (text);
             editor.editable = true;
             content_stack.visible_child_name = "document";

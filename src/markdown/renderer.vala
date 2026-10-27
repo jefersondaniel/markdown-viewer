@@ -7,25 +7,100 @@
 
 namespace Markdown {
 
+    /* A top-level block of a note, or a title with its subtitle, and the
+     * widgets rendered for it. Sections are kept between renders, so an edit
+     * renders again only the sections whose blocks changed. The items of a
+     * top-level list are sections of their own, since lists can be long. */
+    class Section {
+        /* Everything the widgets depend on; see Renderer.fingerprint (). */
+        public string key;
+        /* The source line where the section starts. Task checks keep their
+         * line in "md-line" data, which moves along with it. */
+        public int line;
+
+        /* What to render, until it's rendered. */
+        public Block? block;
+        public Block? subtitle;
+
+        public bool built;
+        public Gtk.Widget? widget;
+        public GenericArray<Section>? items;
+
+        /* Where it was in the previous render, and whether it's used again. */
+        public int index;
+        public bool reused;
+
+        public GenericArray<Notes.TextSegment> segments = new GenericArray<Notes.TextSegment> ();
+        public GenericArray<Gtk.CheckButton> checks = new GenericArray<Gtk.CheckButton> ();
+        /* Headings, with the slug of their text before duplicates are numbered. */
+        public string[] slugs = {};
+        public GenericArray<Gtk.Widget> headings = new GenericArray<Gtk.Widget> ();
+        public GenericArray<Gtk.Label> labels = new GenericArray<Gtk.Label> ();
+
+        public Section (string key, int line, Block block, Block? subtitle) {
+            this.key = key;
+            this.line = line;
+            this.block = block;
+            this.subtitle = subtitle;
+        }
+    }
+
     public class Renderer : Object {
         public signal void link_activated (string uri);
         public signal void task_toggled (int line, bool active);
+        /* More of a note that is still loading was rendered. */
+        public signal void appended ();
 
         public File? base_dir { get; set; }
-        public bool dark { get; set; }
         public bool read_only { get; set; }
-        public string highlight { get; set; default = ""; }
 
-        public int match_count { get; private set; }
-        public GenericArray<Gtk.Widget> match_widgets = new GenericArray<Gtk.Widget> ();
+        /* Code blocks follow the dark style without being rendered again. */
+        public bool dark {
+            get {
+                return _dark;
+            }
+            set {
+                if (_dark == value) {
+                    return;
+                }
+                _dark = value;
+                foreach (var segment in segments) {
+                    var view = segment.widget as GtkSource.View;
+                    if (view != null) {
+                        ((GtkSource.Buffer) view.buffer).style_scheme = code_scheme ();
+                    }
+                }
+            }
+        }
+        bool _dark;
+
+        /* The rendered note. It stays the same widget across updates. */
+        public Gtk.Box content { get; private set; }
 
         /* The selectable text of the note, in reading order. */
         public GenericArray<Notes.TextSegment> segments = new GenericArray<Notes.TextSegment> ();
+        /* All of its text labels, in reading order, for search. */
+        public GenericArray<Gtk.Label> labels = new GenericArray<Gtk.Label> ();
+
+        GenericArray<Section> sections = new GenericArray<Section> ();
+        /* The section being rendered. It collects segments, headings and matches. */
+        Section? current;
+        /* While a note loads, the first section that isn't rendered yet, and
+         * how many sections or list items to render next. */
+        int pending = -1;
+        int batch_size;
+        uint batch_source;
+        Gdk.FrameClock? frame_clock;
+        ulong paint_handler;
+
+        /* Whether all of the note is rendered. */
+        public bool complete {
+            get {
+                return pending < 0;
+            }
+        }
 
         HashTable<string, Gtk.Widget> anchors = new HashTable<string, Gtk.Widget> (str_hash, str_equal);
-        HashTable<string, int> slug_counts = new HashTable<string, int> (str_hash, str_equal);
-        Regex? highlight_re;
-        bool label_matched;
 
         /* How copied text joins the next segment to the one before: blocks are
          * separated by a blank line, list items by a line break, table cells
@@ -40,23 +115,590 @@ namespace Markdown {
 
         const string[] BULLETS = { "•", "◦", "▪" };
 
-        public Gtk.Widget render (Block doc) {
-            if (highlight != "") {
-                try {
-                    highlight_re = new Regex (Regex.escape_string (highlight), RegexCompileFlags.CASELESS);
-                } catch (RegexError e) {
-                    highlight_re = null;
-                }
-            }
-            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 14);
-            box.add_css_class ("markdown");
-            box.set_cursor_from_name ("text");
-            render_children (doc, box, Align.NONE, 0);
-            return box;
+        construct {
+            content = new Gtk.Box (Gtk.Orientation.VERTICAL, 14);
+            content.add_css_class ("markdown");
+            content.set_cursor_from_name ("text");
         }
 
+        /*
+         * Shows `doc`. Sections that are the same as in what was shown before
+         * keep their widgets, so GTK doesn't have to measure them again, and
+         * only the others are rendered.
+         */
+        public void update (Block doc) {
+            for (int k = 0; k < sections.length; k++) {
+                sections[k].index = k;
+                sections[k].reused = false;
+            }
+            var unused = by_key (sections);
+            var next = new GenericArray<Section> ();
+            var blocks = doc.children;
+            for (int k = 0; k < blocks.length; k++) {
+                Block block = blocks[k];
+                Block? subtitle = null;
+                // Keep a title and its subtitle visually together.
+                if (block.kind == BlockKind.HEADING && block.level == 1 && k + 1 < blocks.length
+                    && blocks[k + 1].lead) {
+                    subtitle = blocks[++k];
+                }
+                string key = fingerprint (block, subtitle);
+                Section? section = take (unused, key);
+                if (section != null) {
+                    move_section (section, block.line);
+                } else {
+                    section = new Section (key, block.line, block, subtitle);
+                }
+                next.add (section);
+            }
+
+            // A list that changed takes the place of the old list between the
+            // same neighbors, and keeps the items that didn't change.
+            int last = -1;
+            for (int k = 0; k < next.length; k++) {
+                Section section = next[k];
+                if (section.built) {
+                    last = section.index;
+                    continue;
+                }
+                if (section.block.kind != BlockKind.LIST) {
+                    continue;
+                }
+                for (int j = last + 1; j < sections.length && !sections[j].reused; j++) {
+                    Section old = sections[j];
+                    if (old.items != null) {
+                        old.reused = true;
+                        old.key = section.key;
+                        old.line = section.line;
+                        old.block = section.block;
+                        next[k] = old;
+                        last = j;
+                        break;
+                    }
+                }
+            }
+
+            bool fresh = true;
+            foreach (var old in sections) {
+                if (!old.reused && old.widget != null) {
+                    content.remove (old.widget);
+                }
+                if (old.built) {
+                    fresh = false;
+                }
+            }
+            sections = next;
+
+            // A new note shows its first screen right away, and the rest is
+            // rendered a little at a time, so the window keeps responding.
+            // While that goes on, edits only render what is already shown.
+            bool loading = pending >= 0;
+            stop_loading ();
+            int last_built = -1;
+            for (int k = 0; k < sections.length; k++) {
+                if (sections[k].built) {
+                    last_built = k;
+                }
+            }
+            int width = layout_width ();
+            int screen = fresh ? screen_height () : 0;
+            int filled = 0;
+
+            Gtk.Widget? prev = null;
+            for (int k = 0; k < sections.length; k++) {
+                Section section = sections[k];
+                if (!section.built) {
+                    if ((fresh || loading) && k > last_built && filled >= screen) {
+                        start_loading (k);
+                        break;
+                    }
+                    if (fresh && section.block.kind == BlockKind.LIST) {
+                        // A long list can fill the screen by itself.
+                        int room = screen - filled;
+                        bool whole = build_list (section, prev, true, ref room);
+                        filled = screen - room;
+                        if (!whole) {
+                            start_loading (k);
+                            break;
+                        }
+                    } else {
+                        build (section, prev);
+                        if (fresh && section.widget != null) {
+                            filled += height_of (section.widget, width);
+                        }
+                    }
+                } else {
+                    if (section.block != null) {
+                        update_items (section, section.block);
+                        section.block = null;
+                    }
+                    if (section.widget != null && section.widget.get_prev_sibling () != prev) {
+                        content.reorder_child_after (section.widget, prev);
+                    }
+                }
+                if (section.widget != null) {
+                    prev = section.widget;
+                }
+            }
+            collect ();
+        }
+
+        /*
+         * Renders the next part of a note that is still loading, then waits
+         * for the frame that shows it. Measuring new text takes GTK far
+         * longer than making the widgets, so the size of each part follows
+         * how long the last frame took.
+         */
+        bool load_more () {
+            batch_source = 0;
+            if (content.get_root () == null) {
+                stop_loading ();  // the note was closed
+                return Source.REMOVE;
+            }
+            load (batch_size);
+            if (pending < 0) {
+                return Source.REMOVE;
+            }
+            frame_clock = content.get_frame_clock ();
+            if (frame_clock == null) {
+                batch_source = Idle.add (load_more);
+                return Source.REMOVE;
+            }
+            paint_handler = frame_clock.after_paint.connect (on_frame_painted);
+            frame_clock.request_phase (Gdk.FrameClockPhase.AFTER_PAINT);
+            return Source.REMOVE;
+        }
+
+        void on_frame_painted () {
+            // Aim for frames of about 25 ms, so that scrolling stays fluid.
+            int64 took = int64.max (get_monotonic_time () - frame_clock.get_frame_time (), 1000);
+            frame_clock.disconnect (paint_handler);
+            paint_handler = 0;
+            frame_clock = null;
+            int next = (int) (batch_size * 25000 / took);
+            batch_size = next.clamp (int.max (batch_size / 2, 1), int.min (batch_size * 2, 400));
+            batch_source = Idle.add (load_more);
+        }
+
+        /*
+         * Renders the rest of a note that is still loading right away, for
+         * what needs all of it. Returns whether there was anything left. The
+         * new widgets have their size and place after the next frame.
+         */
+        public bool finish () {
+            if (pending < 0) {
+                return false;
+            }
+            load (int.MAX);
+            return true;
+        }
+
+        /* Renders `count` more sections or list items, from `pending` on. */
+        void load (int count) {
+            stop_waiting ();
+            Gtk.Widget? prev = widget_before (pending);
+            int room = count;
+            while (pending < sections.length && room > 0) {
+                Section section = sections[pending];
+                if (section.block.kind == BlockKind.LIST) {
+                    if (!build_list (section, prev, false, ref room)) {
+                        break;
+                    }
+                } else {
+                    build (section, prev);
+                    room--;
+                }
+                pending++;
+                if (section.widget != null) {
+                    prev = section.widget;
+                }
+            }
+            if (pending >= sections.length) {
+                pending = -1;
+            }
+            collect ();
+            appended ();
+        }
+
+        void stop_waiting () {
+            if (batch_source != 0) {
+                Source.remove (batch_source);
+                batch_source = 0;
+            }
+            if (paint_handler != 0) {
+                frame_clock.disconnect (paint_handler);
+                paint_handler = 0;
+                frame_clock = null;
+            }
+        }
+
+        void stop_loading () {
+            stop_waiting ();
+            pending = -1;
+        }
+
+        void start_loading (int from) {
+            pending = from;
+            if (batch_size <= 0) {
+                batch_size = 8;
+            }
+            batch_source = Idle.add (load_more);
+        }
+
+        Gtk.Widget? widget_before (int index) {
+            for (int k = index - 1; k >= 0; k--) {
+                if (sections[k].widget != null) {
+                    return sections[k].widget;
+                }
+            }
+            return null;
+        }
+
+        /* The width the sections get, or -1 before the preview has one. */
+        int layout_width () {
+            if (content.get_width () > 0) {
+                return content.get_width ();
+            }
+            var parent = content.get_parent ();
+            if (parent == null || parent.get_width () <= 0) {
+                return -1;
+            }
+            return parent.get_width () - content.margin_start - content.margin_end;
+        }
+
+        int screen_height () {
+            var scroller = content.get_ancestor (typeof (Gtk.ScrolledWindow));
+            return scroller != null && scroller.get_height () > 0 ? scroller.get_height () : 800;
+        }
+
+        /* About how tall a new section is, to know when the first screen is full. */
+        static int height_of (Gtk.Widget widget, int width) {
+            if (width <= 0) {
+                return 60;
+            }
+            int min, nat;
+            widget.measure (Gtk.Orientation.HORIZONTAL, -1, out min, out nat, null, null);
+            widget.measure (Gtk.Orientation.VERTICAL, int.max (width, min), out min, out nat, null, null);
+            return nat;
+        }
+
+        /* Rendered sections by key. Equal sections are taken in order. */
+        static HashTable<string, GenericArray<Section>> by_key (GenericArray<Section> list) {
+            var table = new HashTable<string, GenericArray<Section>> (str_hash, str_equal);
+            foreach (var section in list) {
+                if (!section.built || toggled (section)) {
+                    continue;
+                }
+                var same = table[section.key];
+                if (same == null) {
+                    same = new GenericArray<Section> ();
+                    table[section.key] = same;
+                }
+                same.add (section);
+            }
+            return table;
+        }
+
+        static Section? take (HashTable<string, GenericArray<Section>> table, string key) {
+            var same = table[key];
+            if (same == null || same.length == 0) {
+                return null;
+            }
+            Section section = same[0];
+            same.remove_index (0);
+            section.reused = true;
+            return section;
+        }
+
+        /* The source of a reused section now starts at `line`. */
+        static void move_section (Section section, int line) {
+            int delta = line - section.line;
+            if (delta == 0) {
+                return;
+            }
+            section.line = line;
+            foreach (var check in section.checks) {
+                check.set_data<int> ("md-line", check.get_data<int> ("md-line") + delta);
+            }
+            if (section.items != null) {
+                foreach (var item in section.items) {
+                    move_section (item, item.line + delta);
+                }
+            }
+        }
+
+        /* Renders a section and shows it after `prev`. */
+        void build (Section section, Gtk.Widget? prev) {
+            if (section.block.kind == BlockKind.LIST) {
+                int room = int.MAX;
+                build_list (section, prev, false, ref room);
+                return;
+            }
+
+            current = section;
+            block_separator = "\n\n";
+            next_separator = null;
+            Gtk.Widget? widget = render_block (section.block, Align.NONE, 0);
+            if (widget != null && section.subtitle != null) {
+                var group = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
+                group.append (widget);
+                group.append (render_block (section.subtitle, Align.NONE, 0));
+                widget = group;
+            }
+            section.widget = widget;
+            section.built = true;
+            if (widget != null) {
+                content.insert_child_after (widget, prev);
+            }
+            if (widget != null && has_tasks (section.block)) {
+                find_checks (widget, section.checks);
+            }
+            section.block = null;
+            section.subtitle = null;
+            current = null;
+        }
+
+        /* Renders a top-level list, from its first item that isn't rendered
+         * yet, until its items fill `room`: pixels if `measure`, else a number
+         * of items. Returns whether all of it is rendered. */
+        bool build_list (Section section, Gtk.Widget? prev, bool measure, ref int room) {
+            Block list = section.block;
+            if (section.widget == null) {
+                var box = new Gtk.Box (Gtk.Orientation.VERTICAL, list.tight ? 4 : 12);
+                box.add_css_class ("md-list");
+                section.widget = box;
+                section.items = new GenericArray<Section> ();
+                content.insert_child_after (box, prev);
+            }
+            var box = (Gtk.Box) section.widget;
+            int width = measure ? layout_width () : -1;
+            while (section.items.length < list.children.length && room > 0) {
+                int k = (int) section.items.length;
+                Block block = list.children[k];
+                var item = new Section (item_key (list, k, block), block.line, block, null);
+                build_item (item, list, k);
+                box.append (item.widget);
+                section.items.add (item);
+                room -= measure ? height_of (item.widget, width) : 1;
+            }
+            if (section.items.length < list.children.length) {
+                return false;
+            }
+            section.built = true;
+            section.block = null;
+            return true;
+        }
+
+        static string item_key (Block list, int index, Block item) {
+            return "%d %d %d %s".printf ((int) list.ordered, (int) list.tight,
+                                         list.ordered ? list.start + index : 0, fingerprint (item, null));
+        }
+
+        /* Shows the items of a top-level list, keeping those that didn't change. */
+        void update_items (Section section, Block list) {
+            var box = (Gtk.Box) section.widget;
+            box.spacing = list.tight ? 4 : 12;
+            foreach (var item in section.items) {
+                item.reused = false;
+            }
+            var unused = by_key (section.items);
+            var next = new GenericArray<Section> ();
+            for (int k = 0; k < list.children.length; k++) {
+                Block block = list.children[k];
+                string key = item_key (list, k, block);
+                Section? item = take (unused, key);
+                if (item != null) {
+                    move_section (item, block.line);
+                } else {
+                    item = new Section (key, block.line, block, null);
+                }
+                next.add (item);
+            }
+            foreach (var old in section.items) {
+                if (!old.reused) {
+                    box.remove (old.widget);
+                }
+            }
+            section.items = next;
+
+            Gtk.Widget? prev = null;
+            for (int k = 0; k < next.length; k++) {
+                Section item = next[k];
+                if (!item.built) {
+                    build_item (item, list, k);
+                    box.insert_child_after (item.widget, prev);
+                } else if (item.widget.get_prev_sibling () != prev) {
+                    box.reorder_child_after (item.widget, prev);
+                }
+                prev = item.widget;
+            }
+        }
+
+        /* The row of item `index` of `list`, rendered as a list of its own. */
+        void build_item (Section item, Block list, int index) {
+            var single = new Block (BlockKind.LIST);
+            single.ordered = list.ordered;
+            single.start = list.start + index;
+            single.tight = list.tight;
+            single.add (item.block);
+
+            current = item;
+            block_separator = "\n";
+            next_separator = null;
+            var box = (Gtk.Box) list_widget (single, Align.NONE, 0);
+            Gtk.Widget row = box.get_first_child ();
+            box.remove (row);
+            item.widget = row;
+            item.built = true;
+            if (has_tasks (item.block)) {
+                find_checks (row, item.checks);
+            }
+            item.block = null;
+            current = null;
+        }
+
+        /* Whether a check in the section was clicked since it was rendered. Its
+         * widgets no longer match its key until the source catches up. */
+        static bool toggled (Section section) {
+            foreach (var check in section.checks) {
+                if (check.active != check.get_data<bool> ("md-checked")) {
+                    return true;
+                }
+            }
+            if (section.items != null) {
+                foreach (var item in section.items) {
+                    if (toggled (item)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        static bool has_tasks (Block b) {
+            if (b.task) {
+                return true;
+            }
+            foreach (var child in b.children) {
+                if (has_tasks (child)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static void find_checks (Gtk.Widget widget, GenericArray<Gtk.CheckButton> into) {
+            var check = widget as Gtk.CheckButton;
+            if (check != null && check.has_css_class ("md-task")) {
+                check.set_data<bool> ("md-checked", check.active);
+                into.add (check);
+                return;
+            }
+            for (var child = widget.get_first_child (); child != null; child = child.get_next_sibling ()) {
+                find_checks (child, into);
+            }
+        }
+
+        /* Gathers what the rendered sections hold, in reading order. */
+        void collect () {
+            segments = new GenericArray<Notes.TextSegment> ();
+            labels = new GenericArray<Gtk.Label> ();
+            anchors.remove_all ();
+            var slug_counts = new HashTable<string, int> (str_hash, str_equal);
+            foreach (var section in sections) {
+                if (!section.built && section.items == null) {
+                    continue;  // a list that is still loading has some items
+                }
+                uint first = segments.length;
+                if (section.items != null) {
+                    foreach (var item in section.items) {
+                        uint start = segments.length;
+                        collect_section (item, slug_counts);
+                        // List items are separated by a line break when copied.
+                        if (segments.length > start) {
+                            segments[start].separator = "\n";
+                        }
+                    }
+                } else {
+                    collect_section (section, slug_counts);
+                }
+                if (segments.length > first) {
+                    segments[first].separator = "\n\n";
+                }
+            }
+        }
+
+        void collect_section (Section section, HashTable<string, int> slug_counts) {
+            foreach (var segment in section.segments) {
+                segments.add (segment);
+            }
+            foreach (var label in section.labels) {
+                labels.add (label);
+            }
+            for (int k = 0; k < section.slugs.length; k++) {
+                string slug = section.slugs[k];
+                int seen = slug_counts.lookup (slug);
+                slug_counts.insert (slug, seen + 1);
+                anchors.insert (seen > 0 ? "%s-%d".printf (slug, seen) : slug, section.headings[k]);
+            }
+        }
+
+        /* ---- Fingerprints ---- */
+
+        /* A text that differs whenever the widgets of a section would. Lines are
+         * counted from the start of the section, so text added above it doesn't
+         * change it, while the task checks in it can still find their lines. */
+        static string fingerprint (Block block, Block? subtitle) {
+            var sb = new StringBuilder ();
+            print_block (sb, block, block.line);
+            if (subtitle != null) {
+                print_block (sb, subtitle, block.line);
+            }
+            return sb.str;
+        }
+
+        static void print_text (StringBuilder sb, string text) {
+            sb.append_printf ("%d:", text.length);
+            sb.append (text);
+        }
+
+        static void print_block (StringBuilder sb, Block b, int first_line) {
+            sb.append_printf ("(%d %d %d %d %d %d %d %d %d %d %d %d ", (int) b.kind,
+                              b.line >= 0 ? b.line - first_line : -1, b.level, (int) b.lead,
+                              (int) b.ordered, b.start, (int) b.tight, (int) b.task, (int) b.checked,
+                              (int) b.align, (int) b.header, (int) b.open);
+            foreach (var align in b.aligns) {
+                sb.append_printf ("%d", (int) align);
+            }
+            print_text (sb, b.info);
+            print_text (sb, b.code);
+            print_inline (sb, b.inlines);
+            print_inline (sb, b.summary_inlines);
+            foreach (var child in b.children) {
+                print_block (sb, child, first_line);
+            }
+            sb.append_c (')');
+        }
+
+        static void print_inline (StringBuilder sb, Inline? node) {
+            if (node == null) {
+                sb.append_c ('-');
+                return;
+            }
+            sb.append_printf ("[%d %d ", (int) node.kind, node.width);
+            print_text (sb, node.text);
+            print_text (sb, node.url);
+            print_text (sb, node.title);
+            for (Inline? c = node.first; c != null; c = c.next) {
+                print_inline (sb, c);
+            }
+            sb.append_c (']');
+        }
+
+        /* ---- Blocks ---- */
+
         void add_segment (Gtk.Widget widget) {
-            segments.add (new Notes.TextSegment (widget, next_separator ?? block_separator));
+            current.segments.add (new Notes.TextSegment (widget, next_separator ?? block_separator));
             next_separator = null;
         }
 
@@ -226,7 +868,6 @@ namespace Markdown {
          * all the segments of the note. */
         Gtk.Label text_label (Inline? from, Inline? stop, string css, Align align, bool selectable = true) {
             var sb = new StringBuilder ();
-            label_matched = false;
             for (Inline? c = from; c != null && c != stop; c = c.next) {
                 markup_node (sb, c, false);
             }
@@ -254,9 +895,7 @@ namespace Markdown {
                 link_activated (uri);
                 return true;
             });
-            if (label_matched) {
-                match_widgets.add (label);
-            }
+            current.labels.add (label);
             if (selectable) {
                 add_segment (label);
             }
@@ -292,7 +931,7 @@ namespace Markdown {
         void markup_node (StringBuilder sb, Inline node, bool in_link) {
             switch (node.kind) {
             case InlineKind.TEXT:
-                sb.append (escape (node.text));
+                sb.append (Markup.escape_text (node.text));
                 break;
             // Like GitHub comments and most note apps, a line break in the source is kept.
             case InlineKind.SOFTBREAK:
@@ -301,7 +940,7 @@ namespace Markdown {
                 break;
             case InlineKind.CODE:
                 sb.append ("<span font_family=\"monospace\" size=\"90%\" background=\"#7f7f7f\" bgalpha=\"16%\"> ");
-                sb.append (escape (node.text));
+                sb.append (Markup.escape_text (node.text));
                 sb.append (" </span>");
                 break;
             case InlineKind.EMPH:
@@ -357,44 +996,13 @@ namespace Markdown {
                 // An image in the middle of a sentence: show its description.
                 string alt = node.plain_text ();
                 sb.append ("<i>");
-                sb.append (escape (alt != "" ? alt : "image"));
+                sb.append (Markup.escape_text (alt != "" ? alt : "image"));
                 sb.append ("</i>");
                 break;
             default:
                 markup_children (sb, node, in_link);
                 break;
             }
-        }
-
-        /* Escapes text for Pango markup and wraps search matches in a highlight. */
-        string escape (string s) {
-            if (highlight_re == null) {
-                return Markup.escape_text (s);
-            }
-            var sb = new StringBuilder ();
-            int last = 0;
-            MatchInfo mi;
-            try {
-                if (highlight_re.match (s, 0, out mi)) {
-                    do {
-                        int a, b;
-                        mi.fetch_pos (0, out a, out b);
-                        if (b <= a) {
-                            break;
-                        }
-                        sb.append (Markup.escape_text (s.substring (last, a - last)));
-                        sb.append ("<span background=\"#f6d32d\" foreground=\"#1e1e1e\">");
-                        sb.append (Markup.escape_text (s.substring (a, b - a)));
-                        sb.append ("</span>");
-                        last = b;
-                        match_count++;
-                        label_matched = true;
-                    } while (mi.next ());
-                }
-            } catch (RegexError e) {
-            }
-            sb.append (Markup.escape_text (s.substring (last)));
-            return sb.str;
         }
 
         void register_anchor (string text, Gtk.Widget widget) {
@@ -409,13 +1017,9 @@ namespace Markdown {
                     sb.append_c ('-');
                 }
             }
-            string slug = sb.str;
-            int seen = slug_counts.lookup (slug);
-            slug_counts.insert (slug, seen + 1);
-            if (seen > 0) {
-                slug = "%s-%d".printf (slug, seen);
-            }
-            anchors.insert (slug, widget);
+            // Duplicates are numbered once the whole note is known, in collect ().
+            current.slugs += sb.str;
+            current.headings.add (widget);
         }
 
         static Gtk.Align to_halign (Align align) {
@@ -648,6 +1252,10 @@ namespace Markdown {
             return copy;
         }
 
+        GtkSource.StyleScheme? code_scheme () {
+            return GtkSource.StyleSchemeManager.get_default ().get_scheme (dark ? "Adwaita-dark" : "Adwaita");
+        }
+
         Gtk.Widget code_widget (Block b) {
             string code = b.code;
             if (code.has_suffix ("\n")) {
@@ -661,7 +1269,7 @@ namespace Markdown {
             if (lang != null) {
                 buffer.language = lang;
             }
-            buffer.style_scheme = GtkSource.StyleSchemeManager.get_default ().get_scheme (dark ? "Adwaita-dark" : "Adwaita");
+            buffer.style_scheme = code_scheme ();
 
             var view = new GtkSource.View.with_buffer (buffer);
             view.editable = false;

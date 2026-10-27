@@ -133,7 +133,7 @@ HTML comments are hidden. Any other tag is dropped, but the text inside it is ke
 |:--|:--|
 | `src/markdown/parser.vala` | Block parser (lists, quotes, tables, HTML blocks…) |
 | `src/markdown/inline-parser.vala` | Emphasis, links, code spans, entities, inline HTML |
-| `src/markdown/renderer.vala` | Document tree → GTK widgets |
+| `src/markdown/renderer.vala` | Document tree → GTK widgets, updating only the blocks that change |
 | `src/window.blp`, `src/window.vala` | Main window (Blueprint layout + logic) |
 | `src/widgets/file-tree.vala` | Sidebar folder tree and file search |
 | `src/editor.vala` | Source editor with list continuation and shortcuts |

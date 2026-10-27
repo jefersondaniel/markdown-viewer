@@ -12,7 +12,7 @@ public class Notes.TextSegment : Object {
     public Gtk.Widget widget { get; construct; }
 
     /* What goes between this segment and the one before it when copied. */
-    public string separator { get; construct; }
+    public string separator { get; set; }
 
     public TextSegment (Gtk.Widget widget, string separator) {
         Object (widget: widget, separator: separator);
@@ -39,6 +39,7 @@ public class Notes.TextSelection : Gtk.Widget {
     Gtk.Overlay area;
     Gtk.ScrolledWindow scroller;
     GenericArray<TextSegment> segments = new GenericArray<TextSegment> ();
+    GenericArray<Gtk.Adjustment> code_adjustments = new GenericArray<Gtk.Adjustment> ();
 
     /* The selection runs from `anchor`, where it started, to `head`, where it ends now. */
     Position anchor;
@@ -133,16 +134,28 @@ public class Notes.TextSelection : Gtk.Widget {
         menu.present ();
     }
 
-    /* The text of a newly rendered note. Clears the selection. */
-    public void set_segments (GenericArray<TextSegment>? list) {
+    /* All of the note's text is about to be selected. */
+    public signal void select_all_requested ();
+
+    /* The text of a newly rendered note. Clears the selection, unless `keep`
+     * says that the segments it was in are still the first ones. */
+    public void set_segments (GenericArray<TextSegment>? list, bool keep = false) {
+        // The same code views can come back when only part of the note changed.
+        foreach (var adjustment in code_adjustments) {
+            adjustment.value_changed.disconnect (queue_draw);
+        }
+        code_adjustments = new GenericArray<Gtk.Adjustment> ();
         segments = list ?? new GenericArray<TextSegment> ();
-        anchor = Position ();
-        head = anchor;
+        if (!keep) {
+            anchor = Position ();
+            head = anchor;
+        }
         foreach (var segment in segments) {
             // Code views scroll sideways under the selection.
             var code_scroller = segment.widget.get_ancestor (typeof (Gtk.ScrolledWindow)) as Gtk.ScrolledWindow;
             if (segment.widget is Gtk.TextView && code_scroller != null) {
                 code_scroller.hadjustment.value_changed.connect (queue_draw);
+                code_adjustments.add (code_scroller.hadjustment);
             }
         }
         selection_changed ();
@@ -153,6 +166,7 @@ public class Notes.TextSelection : Gtk.Widget {
     }
 
     public void select_all () {
+        select_all_requested ();
         if (segments.length == 0) {
             return;
         }
