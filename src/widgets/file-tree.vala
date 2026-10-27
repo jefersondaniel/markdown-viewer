@@ -182,7 +182,8 @@ public class Notes.FileTree : Adw.Bin {
             // A click anywhere on a folder row opens or closes it; the arrow already does this itself.
             if (click.get_current_button () == Gdk.BUTTON_PRIMARY && n == 1 && row.expandable) {
                 var picked = expander.pick (x, y, Gtk.PickFlags.DEFAULT);
-                if (picked == null || picked.get_css_name () != "expander") {
+                // Not get_css_name (): in Vala that returns the class's name, and the arrow's is "widget".
+                if (picked == null || picked.css_name != "expander") {
                     row.expanded = !row.expanded;
                 }
             }
