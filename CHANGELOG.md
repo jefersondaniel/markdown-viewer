@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.1](https://github.com/jefersondaniel/markdown-viewer/compare/v0.5.0...v0.5.1) (2026-10-27)
+
+
+### Bug Fixes
+
+* **renderer:** free the previous preview when it's replaced ([#42](https://github.com/jefersondaniel/markdown-viewer/issues/42)) ([f717e07](https://github.com/jefersondaniel/markdown-viewer/commit/f717e07bda72670651688a501248dc227724c5ad)), closes [#37](https://github.com/jefersondaniel/markdown-viewer/issues/37)
+* **renderer:** keep line breaks inside paragraphs ([#40](https://github.com/jefersondaniel/markdown-viewer/issues/40)) ([776f15a](https://github.com/jefersondaniel/markdown-viewer/commit/776f15a0cd5253781c1a5fb2b4d8732fd176a535))
+* **sidebar:** open folders with a single click on the arrow ([#39](https://github.com/jefersondaniel/markdown-viewer/issues/39)) ([2e30c2c](https://github.com/jefersondaniel/markdown-viewer/commit/2e30c2ca805f2bae66662507f436a2cee8c75279))
+
+
+### Performance Improvements
+
+* keep the preview responsive while typing and opening long notes ([#43](https://github.com/jefersondaniel/markdown-viewer/issues/43)) ([938f551](https://github.com/jefersondaniel/markdown-viewer/commit/938f5510ec98810fa7e18c669d555438d37ba21f))
+
 ## [0.5.0](https://github.com/jefersondaniel/markdown-viewer/compare/v0.4.0...v0.5.0) (2026-10-24)
 
 
