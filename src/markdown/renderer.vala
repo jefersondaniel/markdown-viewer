@@ -49,6 +49,8 @@ namespace Markdown {
     public class Renderer : Object {
         public signal void link_activated (string uri);
         public signal void task_toggled (int line, bool active);
+        /* More of a note that is still loading was rendered. */
+        public signal void appended ();
 
         public File? base_dir { get; set; }
         public bool read_only { get; set; }
@@ -86,6 +88,20 @@ namespace Markdown {
         GenericArray<Section> sections = new GenericArray<Section> ();
         /* The section being rendered. It collects segments, headings and matches. */
         Section? current;
+        /* While a note loads, the first section that isn't rendered yet, and
+         * how many sections or list items to render next. */
+        int pending = -1;
+        int batch_size;
+        uint batch_source;
+        Gdk.FrameClock? frame_clock;
+        ulong paint_handler;
+
+        /* Whether all of the note is rendered. */
+        public bool complete {
+            get {
+                return pending < 0;
+            }
+        }
 
         HashTable<string, Gtk.Widget> anchors = new HashTable<string, Gtk.Widget> (str_hash, str_equal);
         Regex? highlight_re;
@@ -175,19 +191,54 @@ namespace Markdown {
                 }
             }
 
+            bool fresh = true;
             foreach (var old in sections) {
                 if (!old.reused && old.widget != null) {
                     content.remove (old.widget);
                 }
+                if (old.built) {
+                    fresh = false;
+                }
             }
             sections = next;
 
+            // A new note shows its first screen right away, and the rest is
+            // rendered a little at a time, so the window keeps responding.
+            // While that goes on, edits only render what is already shown.
+            bool loading = pending >= 0;
+            stop_loading ();
+            int last_built = -1;
+            for (int k = 0; k < sections.length; k++) {
+                if (sections[k].built) {
+                    last_built = k;
+                }
+            }
+            int width = layout_width ();
+            int screen = fresh ? screen_height () : 0;
+            int filled = 0;
+
             Gtk.Widget? prev = null;
-            foreach (var section in sections) {
+            for (int k = 0; k < sections.length; k++) {
+                Section section = sections[k];
                 if (!section.built) {
-                    build (section);
-                    if (section.widget != null) {
-                        content.insert_child_after (section.widget, prev);
+                    if ((fresh || loading) && k > last_built && filled >= screen) {
+                        start_loading (k);
+                        break;
+                    }
+                    if (fresh && section.block.kind == BlockKind.LIST) {
+                        // A long list can fill the screen by itself.
+                        int room = screen - filled;
+                        bool whole = build_list (section, prev, true, ref room);
+                        filled = screen - room;
+                        if (!whole) {
+                            start_loading (k);
+                            break;
+                        }
+                    } else {
+                        build (section, prev);
+                        if (fresh && section.widget != null) {
+                            filled += height_of (section.widget, width);
+                        }
                     }
                 } else {
                     if (section.block != null) {
@@ -203,6 +254,145 @@ namespace Markdown {
                 }
             }
             collect ();
+        }
+
+        /*
+         * Renders the next part of a note that is still loading, then waits
+         * for the frame that shows it. Measuring new text takes GTK far
+         * longer than making the widgets, so the size of each part follows
+         * how long the last frame took.
+         */
+        bool load_more () {
+            batch_source = 0;
+            if (content.get_root () == null) {
+                stop_loading ();  // the note was closed
+                return Source.REMOVE;
+            }
+            load (batch_size);
+            if (pending < 0) {
+                return Source.REMOVE;
+            }
+            frame_clock = content.get_frame_clock ();
+            if (frame_clock == null) {
+                batch_source = Idle.add (load_more);
+                return Source.REMOVE;
+            }
+            paint_handler = frame_clock.after_paint.connect (on_frame_painted);
+            frame_clock.request_phase (Gdk.FrameClockPhase.AFTER_PAINT);
+            return Source.REMOVE;
+        }
+
+        void on_frame_painted () {
+            // Aim for frames of about 25 ms, so that scrolling stays fluid.
+            int64 took = int64.max (get_monotonic_time () - frame_clock.get_frame_time (), 1000);
+            frame_clock.disconnect (paint_handler);
+            paint_handler = 0;
+            frame_clock = null;
+            int next = (int) (batch_size * 25000 / took);
+            batch_size = next.clamp (int.max (batch_size / 2, 1), int.min (batch_size * 2, 400));
+            batch_source = Idle.add (load_more);
+        }
+
+        /*
+         * Renders the rest of a note that is still loading right away, for
+         * what needs all of it. Returns whether there was anything left. The
+         * new widgets have their size and place after the next frame.
+         */
+        public bool finish () {
+            if (pending < 0) {
+                return false;
+            }
+            load (int.MAX);
+            return true;
+        }
+
+        /* Renders `count` more sections or list items, from `pending` on. */
+        void load (int count) {
+            stop_waiting ();
+            Gtk.Widget? prev = widget_before (pending);
+            int room = count;
+            while (pending < sections.length && room > 0) {
+                Section section = sections[pending];
+                if (section.block.kind == BlockKind.LIST) {
+                    if (!build_list (section, prev, false, ref room)) {
+                        break;
+                    }
+                } else {
+                    build (section, prev);
+                    room--;
+                }
+                pending++;
+                if (section.widget != null) {
+                    prev = section.widget;
+                }
+            }
+            if (pending >= sections.length) {
+                pending = -1;
+            }
+            collect ();
+            appended ();
+        }
+
+        void stop_waiting () {
+            if (batch_source != 0) {
+                Source.remove (batch_source);
+                batch_source = 0;
+            }
+            if (paint_handler != 0) {
+                frame_clock.disconnect (paint_handler);
+                paint_handler = 0;
+                frame_clock = null;
+            }
+        }
+
+        void stop_loading () {
+            stop_waiting ();
+            pending = -1;
+        }
+
+        void start_loading (int from) {
+            pending = from;
+            if (batch_size <= 0) {
+                batch_size = 8;
+            }
+            batch_source = Idle.add (load_more);
+        }
+
+        Gtk.Widget? widget_before (int index) {
+            for (int k = index - 1; k >= 0; k--) {
+                if (sections[k].widget != null) {
+                    return sections[k].widget;
+                }
+            }
+            return null;
+        }
+
+        /* The width the sections get, or -1 before the preview has one. */
+        int layout_width () {
+            if (content.get_width () > 0) {
+                return content.get_width ();
+            }
+            var parent = content.get_parent ();
+            if (parent == null || parent.get_width () <= 0) {
+                return -1;
+            }
+            return parent.get_width () - content.margin_start - content.margin_end;
+        }
+
+        int screen_height () {
+            var scroller = content.get_ancestor (typeof (Gtk.ScrolledWindow));
+            return scroller != null && scroller.get_height () > 0 ? scroller.get_height () : 800;
+        }
+
+        /* About how tall a new section is, to know when the first screen is full. */
+        static int height_of (Gtk.Widget widget, int width) {
+            if (width <= 0) {
+                return 60;
+            }
+            int min, nat;
+            widget.measure (Gtk.Orientation.HORIZONTAL, -1, out min, out nat, null, null);
+            widget.measure (Gtk.Orientation.VERTICAL, int.max (width, min), out min, out nat, null, null);
+            return nat;
         }
 
         /* Rendered sections by key. Equal sections are taken in order. */
@@ -250,15 +440,11 @@ namespace Markdown {
             }
         }
 
-        void build (Section section) {
+        /* Renders a section and shows it after `prev`. */
+        void build (Section section, Gtk.Widget? prev) {
             if (section.block.kind == BlockKind.LIST) {
-                var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
-                box.add_css_class ("md-list");
-                section.widget = box;
-                section.items = new GenericArray<Section> ();
-                section.built = true;
-                update_items (section, section.block);
-                section.block = null;
+                int room = int.MAX;
+                build_list (section, prev, false, ref room);
                 return;
             }
 
@@ -274,12 +460,51 @@ namespace Markdown {
             }
             section.widget = widget;
             section.built = true;
+            if (widget != null) {
+                content.insert_child_after (widget, prev);
+            }
             if (widget != null && has_tasks (section.block)) {
                 find_checks (widget, section.checks);
             }
             section.block = null;
             section.subtitle = null;
             current = null;
+        }
+
+        /* Renders a top-level list, from its first item that isn't rendered
+         * yet, until its items fill `room`: pixels if `measure`, else a number
+         * of items. Returns whether all of it is rendered. */
+        bool build_list (Section section, Gtk.Widget? prev, bool measure, ref int room) {
+            Block list = section.block;
+            if (section.widget == null) {
+                var box = new Gtk.Box (Gtk.Orientation.VERTICAL, list.tight ? 4 : 12);
+                box.add_css_class ("md-list");
+                section.widget = box;
+                section.items = new GenericArray<Section> ();
+                content.insert_child_after (box, prev);
+            }
+            var box = (Gtk.Box) section.widget;
+            int width = measure ? layout_width () : -1;
+            while (section.items.length < list.children.length && room > 0) {
+                int k = (int) section.items.length;
+                Block block = list.children[k];
+                var item = new Section (item_key (list, k, block), block.line, block, null);
+                build_item (item, list, k);
+                box.append (item.widget);
+                section.items.add (item);
+                room -= measure ? height_of (item.widget, width) : 1;
+            }
+            if (section.items.length < list.children.length) {
+                return false;
+            }
+            section.built = true;
+            section.block = null;
+            return true;
+        }
+
+        static string item_key (Block list, int index, Block item) {
+            return "%d %d %d %s".printf ((int) list.ordered, (int) list.tight,
+                                         list.ordered ? list.start + index : 0, fingerprint (item, null));
         }
 
         /* Shows the items of a top-level list, keeping those that didn't change. */
@@ -293,8 +518,7 @@ namespace Markdown {
             var next = new GenericArray<Section> ();
             for (int k = 0; k < list.children.length; k++) {
                 Block block = list.children[k];
-                string key = "%d %d %d %s".printf ((int) list.ordered, (int) list.tight,
-                                                   list.ordered ? list.start + k : 0, fingerprint (block, null));
+                string key = item_key (list, k, block);
                 Section? item = take (unused, key);
                 if (item != null) {
                     move_section (item, block.line);
@@ -396,8 +620,8 @@ namespace Markdown {
             anchors.remove_all ();
             var slug_counts = new HashTable<string, int> (str_hash, str_equal);
             foreach (var section in sections) {
-                if (!section.built) {
-                    continue;
+                if (!section.built && section.items == null) {
+                    continue;  // a list that is still loading has some items
                 }
                 uint first = segments.length;
                 if (section.items != null) {

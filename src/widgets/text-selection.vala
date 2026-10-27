@@ -134,16 +134,22 @@ public class Notes.TextSelection : Gtk.Widget {
         menu.present ();
     }
 
-    /* The text of a newly rendered note. Clears the selection. */
-    public void set_segments (GenericArray<TextSegment>? list) {
+    /* All of the note's text is about to be selected. */
+    public signal void select_all_requested ();
+
+    /* The text of a newly rendered note. Clears the selection, unless `keep`
+     * says that the segments it was in are still the first ones. */
+    public void set_segments (GenericArray<TextSegment>? list, bool keep = false) {
         // The same code views can come back when only part of the note changed.
         foreach (var adjustment in code_adjustments) {
             adjustment.value_changed.disconnect (queue_draw);
         }
         code_adjustments = new GenericArray<Gtk.Adjustment> ();
         segments = list ?? new GenericArray<TextSegment> ();
-        anchor = Position ();
-        head = anchor;
+        if (!keep) {
+            anchor = Position ();
+            head = anchor;
+        }
         foreach (var segment in segments) {
             // Code views scroll sideways under the selection.
             var code_scroller = segment.widget.get_ancestor (typeof (Gtk.ScrolledWindow)) as Gtk.ScrolledWindow;
@@ -160,6 +166,7 @@ public class Notes.TextSelection : Gtk.Widget {
     }
 
     public void select_all () {
+        select_all_requested ();
         if (segments.length == 0) {
             return;
         }

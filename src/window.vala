@@ -167,6 +167,11 @@ namespace Notes {
         void setup_preview () {
             preview_clamp.child = preview_overlay;
             selection = new TextSelection (preview_overlay, preview_scroller);
+            selection.select_all_requested.connect (() => {
+                if (renderer != null) {
+                    renderer.finish ();
+                }
+            });
         }
 
         void setup_sidebar () {
@@ -835,7 +840,8 @@ namespace Notes {
             }
             // The renderer stays for as long as the note is open, and updates
             // only the parts of the preview that change.
-            if (renderer == null) {
+            bool created = renderer == null;
+            if (created) {
                 var r = new Markdown.Renderer ();
                 r.base_dir = dir;
                 r.dark = Adw.StyleManager.get_default ().dark;
@@ -843,6 +849,7 @@ namespace Notes {
                 r.highlight = highlight;
                 r.link_activated.connect (on_link_activated);
                 r.task_toggled.connect (on_task_toggled);
+                r.appended.connect (on_preview_appended);
                 r.content.margin_start = 32;
                 r.content.margin_end = 32;
                 r.content.margin_top = 20;
@@ -854,6 +861,11 @@ namespace Notes {
             var adj = preview_scroller.vadjustment;
             double position = adj.value;
             renderer.update (doc);
+            // A long note is rendered a little at a time when it's new. Searching
+            // it, or going back to where it was scrolled to, needs all of it.
+            if (highlight != "" || (created && keep_scroll && position > 0)) {
+                renderer.finish ();
+            }
             selection.set_segments (renderer.segments);
             match_index = -1;
 
@@ -869,6 +881,12 @@ namespace Notes {
             } else {
                 adj.value = 0;
             }
+            update_find_count ();
+        }
+
+        /* More of a long note was rendered. A selection in what was there stays. */
+        void on_preview_appended () {
+            selection.set_segments (renderer.segments, true);
             update_find_count ();
         }
 
@@ -953,6 +971,7 @@ namespace Notes {
             if (renderer == null) {
                 return;
             }
+            renderer.finish ();
             var widget = renderer.get_anchor (Uri.unescape_string (slug) ?? slug);
             if (widget != null) {
                 scroll_to_widget (widget);
@@ -960,6 +979,22 @@ namespace Notes {
         }
 
         void scroll_to_widget (Gtk.Widget widget) {
+            // A part of the note that was just rendered gets its place in the next frame.
+            if (widget.get_width () == 0 && widget.get_height () == 0) {
+                stop_scroll_restore ();
+                var clock = get_frame_clock ();
+                if (clock != null) {
+                    ulong handler = 0;
+                    handler = clock.after_paint.connect (() => {
+                        clock.disconnect (handler);
+                        if (widget.get_width () > 0 || widget.get_height () > 0) {
+                            scroll_to_widget (widget);
+                        }
+                    });
+                    clock.request_phase (Gdk.FrameClockPhase.AFTER_PAINT);
+                }
+                return;
+            }
             Graphene.Point point;
             if (widget.compute_point (preview_clamp, Graphene.Point () { x = 0, y = 0 }, out point)) {
                 stop_scroll_restore ();
