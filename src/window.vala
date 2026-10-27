@@ -378,7 +378,7 @@ namespace Notes {
             doc_file = file;
             doc_read_only = file.get_uri () == GUIDE_URI;
             draft = false;
-            reload_buffer (text);
+            reload_buffer (text, false);
             Gtk.TextIter start;
             editor.buffer.get_start_iter (out start);
             editor.buffer.place_cursor (start);
@@ -391,9 +391,6 @@ namespace Notes {
             update_actions ();
             preview_dirty = true;
             render_preview (false);
-            if (find_bar.search_mode_enabled) {
-                run_find ();
-            }
             file_tree.select_file (doc_read_only ? null : doc_file);
             if (!doc_read_only) {
                 state.set_string ("last-file", file.get_path ());
@@ -403,7 +400,9 @@ namespace Notes {
             }
         }
 
-        void reload_buffer (string text) {
+        /* Shows `text` in the editor as the saved version of the note. The
+         * preview is rendered again unless the caller does it itself. */
+        void reload_buffer (string text, bool render = true) {
             var buffer = editor.buffer;
             loading = true;
             buffer.begin_irreversible_action ();
@@ -414,7 +413,9 @@ namespace Notes {
             set_disk_conflict (false);
 
             preview_dirty = true;
-            render_preview (true);
+            if (render) {
+                render_preview (true);
+            }
         }
 
         /* Replaces only the part that differs. Setting the whole text would move
