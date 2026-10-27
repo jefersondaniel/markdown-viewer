@@ -7,14 +7,75 @@
 
 namespace Markdown {
 
+    /* A top-level block of a note, or a title with its subtitle, and the
+     * widgets rendered for it. Sections are kept between renders, so an edit
+     * renders again only the sections whose blocks changed. The items of a
+     * top-level list are sections of their own, since lists can be long. */
+    class Section {
+        /* Everything the widgets depend on; see Renderer.fingerprint (). */
+        public string key;
+        /* The source line where the section starts. Task checks keep their
+         * line in "md-line" data, which moves along with it. */
+        public int line;
+
+        /* What to render, until it's rendered. */
+        public Block? block;
+        public Block? subtitle;
+
+        public bool built;
+        public Gtk.Widget? widget;
+        public GenericArray<Section>? items;
+
+        /* Where it was in the previous render, and whether it's used again. */
+        public int index;
+        public bool reused;
+
+        public GenericArray<Notes.TextSegment> segments = new GenericArray<Notes.TextSegment> ();
+        public GenericArray<Gtk.CheckButton> checks = new GenericArray<Gtk.CheckButton> ();
+        /* Headings, with the slug of their text before duplicates are numbered. */
+        public string[] slugs = {};
+        public GenericArray<Gtk.Widget> headings = new GenericArray<Gtk.Widget> ();
+        public GenericArray<Gtk.Widget> match_widgets = new GenericArray<Gtk.Widget> ();
+        public int match_count;
+
+        public Section (string key, int line, Block block, Block? subtitle) {
+            this.key = key;
+            this.line = line;
+            this.block = block;
+            this.subtitle = subtitle;
+        }
+    }
+
     public class Renderer : Object {
         public signal void link_activated (string uri);
         public signal void task_toggled (int line, bool active);
 
         public File? base_dir { get; set; }
-        public bool dark { get; set; }
         public bool read_only { get; set; }
         public string highlight { get; set; default = ""; }
+
+        /* Code blocks follow the dark style without being rendered again. */
+        public bool dark {
+            get {
+                return _dark;
+            }
+            set {
+                if (_dark == value) {
+                    return;
+                }
+                _dark = value;
+                foreach (var segment in segments) {
+                    var view = segment.widget as GtkSource.View;
+                    if (view != null) {
+                        ((GtkSource.Buffer) view.buffer).style_scheme = code_scheme ();
+                    }
+                }
+            }
+        }
+        bool _dark;
+
+        /* The rendered note. It stays the same widget across updates. */
+        public Gtk.Box content { get; private set; }
 
         public int match_count { get; private set; }
         public GenericArray<Gtk.Widget> match_widgets = new GenericArray<Gtk.Widget> ();
@@ -22,8 +83,11 @@ namespace Markdown {
         /* The selectable text of the note, in reading order. */
         public GenericArray<Notes.TextSegment> segments = new GenericArray<Notes.TextSegment> ();
 
+        GenericArray<Section> sections = new GenericArray<Section> ();
+        /* The section being rendered. It collects segments, headings and matches. */
+        Section? current;
+
         HashTable<string, Gtk.Widget> anchors = new HashTable<string, Gtk.Widget> (str_hash, str_equal);
-        HashTable<string, int> slug_counts = new HashTable<string, int> (str_hash, str_equal);
         Regex? highlight_re;
         bool label_matched;
 
@@ -40,23 +104,392 @@ namespace Markdown {
 
         const string[] BULLETS = { "•", "◦", "▪" };
 
-        public Gtk.Widget render (Block doc) {
-            if (highlight != "") {
+        construct {
+            content = new Gtk.Box (Gtk.Orientation.VERTICAL, 14);
+            content.add_css_class ("markdown");
+            content.set_cursor_from_name ("text");
+        }
+
+        /*
+         * Shows `doc`. Sections that are the same as in what was shown before
+         * keep their widgets, so GTK doesn't have to measure them again, and
+         * only the others are rendered.
+         */
+        public void update (Block doc) {
+            if (highlight != "" && highlight_re == null) {
                 try {
                     highlight_re = new Regex (Regex.escape_string (highlight), RegexCompileFlags.CASELESS);
                 } catch (RegexError e) {
                     highlight_re = null;
                 }
             }
-            var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 14);
-            box.add_css_class ("markdown");
-            box.set_cursor_from_name ("text");
-            render_children (doc, box, Align.NONE, 0);
-            return box;
+
+            for (int k = 0; k < sections.length; k++) {
+                sections[k].index = k;
+                sections[k].reused = false;
+            }
+            var unused = by_key (sections);
+            var next = new GenericArray<Section> ();
+            var blocks = doc.children;
+            for (int k = 0; k < blocks.length; k++) {
+                Block block = blocks[k];
+                Block? subtitle = null;
+                // Keep a title and its subtitle visually together.
+                if (block.kind == BlockKind.HEADING && block.level == 1 && k + 1 < blocks.length
+                    && blocks[k + 1].lead) {
+                    subtitle = blocks[++k];
+                }
+                string key = fingerprint (block, subtitle);
+                Section? section = take (unused, key);
+                if (section != null) {
+                    move_section (section, block.line);
+                } else {
+                    section = new Section (key, block.line, block, subtitle);
+                }
+                next.add (section);
+            }
+
+            // A list that changed takes the place of the old list between the
+            // same neighbors, and keeps the items that didn't change.
+            int last = -1;
+            for (int k = 0; k < next.length; k++) {
+                Section section = next[k];
+                if (section.built) {
+                    last = section.index;
+                    continue;
+                }
+                if (section.block.kind != BlockKind.LIST) {
+                    continue;
+                }
+                for (int j = last + 1; j < sections.length && !sections[j].reused; j++) {
+                    Section old = sections[j];
+                    if (old.items != null) {
+                        old.reused = true;
+                        old.key = section.key;
+                        old.line = section.line;
+                        old.block = section.block;
+                        next[k] = old;
+                        last = j;
+                        break;
+                    }
+                }
+            }
+
+            foreach (var old in sections) {
+                if (!old.reused && old.widget != null) {
+                    content.remove (old.widget);
+                }
+            }
+            sections = next;
+
+            Gtk.Widget? prev = null;
+            foreach (var section in sections) {
+                if (!section.built) {
+                    build (section);
+                    if (section.widget != null) {
+                        content.insert_child_after (section.widget, prev);
+                    }
+                } else {
+                    if (section.block != null) {
+                        update_items (section, section.block);
+                        section.block = null;
+                    }
+                    if (section.widget != null && section.widget.get_prev_sibling () != prev) {
+                        content.reorder_child_after (section.widget, prev);
+                    }
+                }
+                if (section.widget != null) {
+                    prev = section.widget;
+                }
+            }
+            collect ();
         }
 
+        /* Rendered sections by key. Equal sections are taken in order. */
+        static HashTable<string, GenericArray<Section>> by_key (GenericArray<Section> list) {
+            var table = new HashTable<string, GenericArray<Section>> (str_hash, str_equal);
+            foreach (var section in list) {
+                if (!section.built || toggled (section)) {
+                    continue;
+                }
+                var same = table[section.key];
+                if (same == null) {
+                    same = new GenericArray<Section> ();
+                    table[section.key] = same;
+                }
+                same.add (section);
+            }
+            return table;
+        }
+
+        static Section? take (HashTable<string, GenericArray<Section>> table, string key) {
+            var same = table[key];
+            if (same == null || same.length == 0) {
+                return null;
+            }
+            Section section = same[0];
+            same.remove_index (0);
+            section.reused = true;
+            return section;
+        }
+
+        /* The source of a reused section now starts at `line`. */
+        static void move_section (Section section, int line) {
+            int delta = line - section.line;
+            if (delta == 0) {
+                return;
+            }
+            section.line = line;
+            foreach (var check in section.checks) {
+                check.set_data<int> ("md-line", check.get_data<int> ("md-line") + delta);
+            }
+            if (section.items != null) {
+                foreach (var item in section.items) {
+                    move_section (item, item.line + delta);
+                }
+            }
+        }
+
+        void build (Section section) {
+            if (section.block.kind == BlockKind.LIST) {
+                var box = new Gtk.Box (Gtk.Orientation.VERTICAL, 0);
+                box.add_css_class ("md-list");
+                section.widget = box;
+                section.items = new GenericArray<Section> ();
+                section.built = true;
+                update_items (section, section.block);
+                section.block = null;
+                return;
+            }
+
+            current = section;
+            block_separator = "\n\n";
+            next_separator = null;
+            Gtk.Widget? widget = render_block (section.block, Align.NONE, 0);
+            if (widget != null && section.subtitle != null) {
+                var group = new Gtk.Box (Gtk.Orientation.VERTICAL, 2);
+                group.append (widget);
+                group.append (render_block (section.subtitle, Align.NONE, 0));
+                widget = group;
+            }
+            section.widget = widget;
+            section.built = true;
+            if (widget != null && has_tasks (section.block)) {
+                find_checks (widget, section.checks);
+            }
+            section.block = null;
+            section.subtitle = null;
+            current = null;
+        }
+
+        /* Shows the items of a top-level list, keeping those that didn't change. */
+        void update_items (Section section, Block list) {
+            var box = (Gtk.Box) section.widget;
+            box.spacing = list.tight ? 4 : 12;
+            foreach (var item in section.items) {
+                item.reused = false;
+            }
+            var unused = by_key (section.items);
+            var next = new GenericArray<Section> ();
+            for (int k = 0; k < list.children.length; k++) {
+                Block block = list.children[k];
+                string key = "%d %d %d %s".printf ((int) list.ordered, (int) list.tight,
+                                                   list.ordered ? list.start + k : 0, fingerprint (block, null));
+                Section? item = take (unused, key);
+                if (item != null) {
+                    move_section (item, block.line);
+                } else {
+                    item = new Section (key, block.line, block, null);
+                }
+                next.add (item);
+            }
+            foreach (var old in section.items) {
+                if (!old.reused) {
+                    box.remove (old.widget);
+                }
+            }
+            section.items = next;
+
+            Gtk.Widget? prev = null;
+            for (int k = 0; k < next.length; k++) {
+                Section item = next[k];
+                if (!item.built) {
+                    build_item (item, list, k);
+                    box.insert_child_after (item.widget, prev);
+                } else if (item.widget.get_prev_sibling () != prev) {
+                    box.reorder_child_after (item.widget, prev);
+                }
+                prev = item.widget;
+            }
+        }
+
+        /* The row of item `index` of `list`, rendered as a list of its own. */
+        void build_item (Section item, Block list, int index) {
+            var single = new Block (BlockKind.LIST);
+            single.ordered = list.ordered;
+            single.start = list.start + index;
+            single.tight = list.tight;
+            single.add (item.block);
+
+            current = item;
+            block_separator = "\n";
+            next_separator = null;
+            var box = (Gtk.Box) list_widget (single, Align.NONE, 0);
+            Gtk.Widget row = box.get_first_child ();
+            box.remove (row);
+            item.widget = row;
+            item.built = true;
+            if (has_tasks (item.block)) {
+                find_checks (row, item.checks);
+            }
+            item.block = null;
+            current = null;
+        }
+
+        /* Whether a check in the section was clicked since it was rendered. Its
+         * widgets no longer match its key until the source catches up. */
+        static bool toggled (Section section) {
+            foreach (var check in section.checks) {
+                if (check.active != check.get_data<bool> ("md-checked")) {
+                    return true;
+                }
+            }
+            if (section.items != null) {
+                foreach (var item in section.items) {
+                    if (toggled (item)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
+        static bool has_tasks (Block b) {
+            if (b.task) {
+                return true;
+            }
+            foreach (var child in b.children) {
+                if (has_tasks (child)) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        static void find_checks (Gtk.Widget widget, GenericArray<Gtk.CheckButton> into) {
+            var check = widget as Gtk.CheckButton;
+            if (check != null && check.has_css_class ("md-task")) {
+                check.set_data<bool> ("md-checked", check.active);
+                into.add (check);
+                return;
+            }
+            for (var child = widget.get_first_child (); child != null; child = child.get_next_sibling ()) {
+                find_checks (child, into);
+            }
+        }
+
+        /* Gathers what the rendered sections hold, in reading order. */
+        void collect () {
+            segments = new GenericArray<Notes.TextSegment> ();
+            match_widgets = new GenericArray<Gtk.Widget> ();
+            match_count = 0;
+            anchors.remove_all ();
+            var slug_counts = new HashTable<string, int> (str_hash, str_equal);
+            foreach (var section in sections) {
+                if (!section.built) {
+                    continue;
+                }
+                uint first = segments.length;
+                if (section.items != null) {
+                    foreach (var item in section.items) {
+                        uint start = segments.length;
+                        collect_section (item, slug_counts);
+                        // List items are separated by a line break when copied.
+                        if (segments.length > start) {
+                            segments[start].separator = "\n";
+                        }
+                    }
+                } else {
+                    collect_section (section, slug_counts);
+                }
+                if (segments.length > first) {
+                    segments[first].separator = "\n\n";
+                }
+            }
+        }
+
+        void collect_section (Section section, HashTable<string, int> slug_counts) {
+            foreach (var segment in section.segments) {
+                segments.add (segment);
+            }
+            foreach (var widget in section.match_widgets) {
+                match_widgets.add (widget);
+            }
+            match_count += section.match_count;
+            for (int k = 0; k < section.slugs.length; k++) {
+                string slug = section.slugs[k];
+                int seen = slug_counts.lookup (slug);
+                slug_counts.insert (slug, seen + 1);
+                anchors.insert (seen > 0 ? "%s-%d".printf (slug, seen) : slug, section.headings[k]);
+            }
+        }
+
+        /* ---- Fingerprints ---- */
+
+        /* A text that differs whenever the widgets of a section would. Lines are
+         * counted from the start of the section, so text added above it doesn't
+         * change it, while the task checks in it can still find their lines. */
+        static string fingerprint (Block block, Block? subtitle) {
+            var sb = new StringBuilder ();
+            print_block (sb, block, block.line);
+            if (subtitle != null) {
+                print_block (sb, subtitle, block.line);
+            }
+            return sb.str;
+        }
+
+        static void print_text (StringBuilder sb, string text) {
+            sb.append_printf ("%d:", text.length);
+            sb.append (text);
+        }
+
+        static void print_block (StringBuilder sb, Block b, int first_line) {
+            sb.append_printf ("(%d %d %d %d %d %d %d %d %d %d %d %d ", (int) b.kind,
+                              b.line >= 0 ? b.line - first_line : -1, b.level, (int) b.lead,
+                              (int) b.ordered, b.start, (int) b.tight, (int) b.task, (int) b.checked,
+                              (int) b.align, (int) b.header, (int) b.open);
+            foreach (var align in b.aligns) {
+                sb.append_printf ("%d", (int) align);
+            }
+            print_text (sb, b.info);
+            print_text (sb, b.code);
+            print_inline (sb, b.inlines);
+            print_inline (sb, b.summary_inlines);
+            foreach (var child in b.children) {
+                print_block (sb, child, first_line);
+            }
+            sb.append_c (')');
+        }
+
+        static void print_inline (StringBuilder sb, Inline? node) {
+            if (node == null) {
+                sb.append_c ('-');
+                return;
+            }
+            sb.append_printf ("[%d %d ", (int) node.kind, node.width);
+            print_text (sb, node.text);
+            print_text (sb, node.url);
+            print_text (sb, node.title);
+            for (Inline? c = node.first; c != null; c = c.next) {
+                print_inline (sb, c);
+            }
+            sb.append_c (']');
+        }
+
+        /* ---- Blocks ---- */
+
         void add_segment (Gtk.Widget widget) {
-            segments.add (new Notes.TextSegment (widget, next_separator ?? block_separator));
+            current.segments.add (new Notes.TextSegment (widget, next_separator ?? block_separator));
             next_separator = null;
         }
 
@@ -255,7 +688,7 @@ namespace Markdown {
                 return true;
             });
             if (label_matched) {
-                match_widgets.add (label);
+                current.match_widgets.add (label);
             }
             if (selectable) {
                 add_segment (label);
@@ -387,7 +820,7 @@ namespace Markdown {
                         sb.append (Markup.escape_text (s.substring (a, b - a)));
                         sb.append ("</span>");
                         last = b;
-                        match_count++;
+                        current.match_count++;
                         label_matched = true;
                     } while (mi.next ());
                 }
@@ -409,13 +842,9 @@ namespace Markdown {
                     sb.append_c ('-');
                 }
             }
-            string slug = sb.str;
-            int seen = slug_counts.lookup (slug);
-            slug_counts.insert (slug, seen + 1);
-            if (seen > 0) {
-                slug = "%s-%d".printf (slug, seen);
-            }
-            anchors.insert (slug, widget);
+            // Duplicates are numbered once the whole note is known, in collect ().
+            current.slugs += sb.str;
+            current.headings.add (widget);
         }
 
         static Gtk.Align to_halign (Align align) {
@@ -648,6 +1077,10 @@ namespace Markdown {
             return copy;
         }
 
+        GtkSource.StyleScheme? code_scheme () {
+            return GtkSource.StyleSchemeManager.get_default ().get_scheme (dark ? "Adwaita-dark" : "Adwaita");
+        }
+
         Gtk.Widget code_widget (Block b) {
             string code = b.code;
             if (code.has_suffix ("\n")) {
@@ -661,7 +1094,7 @@ namespace Markdown {
             if (lang != null) {
                 buffer.language = lang;
             }
-            buffer.style_scheme = GtkSource.StyleSchemeManager.get_default ().get_scheme (dark ? "Adwaita-dark" : "Adwaita");
+            buffer.style_scheme = code_scheme ();
 
             var view = new GtkSource.View.with_buffer (buffer);
             view.editable = false;

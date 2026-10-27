@@ -131,8 +131,9 @@ namespace Notes {
             editor.set_dark (style.dark);
             style.notify["dark"].connect (() => {
                 editor.set_dark (style.dark);
-                preview_dirty = true;
-                render_preview (true);
+                if (renderer != null) {
+                    renderer.dark = style.dark;
+                }
             });
 
             string saved_folder = state.get_string ("folder");
@@ -378,6 +379,7 @@ namespace Notes {
             doc_file = file;
             doc_read_only = file.get_uri () == GUIDE_URI;
             draft = false;
+            drop_preview ();
             reload_buffer (text, false);
             Gtk.TextIter start;
             editor.buffer.get_start_iter (out start);
@@ -473,9 +475,7 @@ namespace Notes {
             editor.buffer.text = "";
             loading = false;
             saved_text = "";
-            preview_overlay.child = null;
-            selection.set_segments (null);
-            renderer = null;
+            drop_preview ();
             content_stack.visible_child_name = "empty";
             update_header ();
             update_actions ();
@@ -826,25 +826,35 @@ namespace Notes {
             preview_dirty = false;
 
             var doc = new Markdown.Parser ().parse (editor.buffer.text);
-            var r = new Markdown.Renderer ();
-            r.base_dir = doc_dir ();
-            r.dark = Adw.StyleManager.get_default ().dark;
-            r.read_only = doc_read_only;
-            r.highlight = find_bar.search_mode_enabled ? find_entry.text : "";
-            r.link_activated.connect (on_link_activated);
-            r.task_toggled.connect (on_task_toggled);
-
-            var content = r.render (doc);
-            content.margin_start = 32;
-            content.margin_end = 32;
-            content.margin_top = 20;
-            content.margin_bottom = 64;
+            string highlight = find_bar.search_mode_enabled ? find_entry.text : "";
+            File? dir = doc_dir ();
+            if (renderer != null && (renderer.highlight != highlight || renderer.read_only != doc_read_only
+                                     || (renderer.base_dir == null) != (dir == null)
+                                     || (dir != null && !dir.equal (renderer.base_dir)))) {
+                drop_preview ();
+            }
+            // The renderer stays for as long as the note is open, and updates
+            // only the parts of the preview that change.
+            if (renderer == null) {
+                var r = new Markdown.Renderer ();
+                r.base_dir = dir;
+                r.dark = Adw.StyleManager.get_default ().dark;
+                r.read_only = doc_read_only;
+                r.highlight = highlight;
+                r.link_activated.connect (on_link_activated);
+                r.task_toggled.connect (on_task_toggled);
+                r.content.margin_start = 32;
+                r.content.margin_end = 32;
+                r.content.margin_top = 20;
+                r.content.margin_bottom = 64;
+                preview_overlay.child = r.content;
+                renderer = r;
+            }
 
             var adj = preview_scroller.vadjustment;
             double position = adj.value;
-            preview_overlay.child = content;
-            selection.set_segments (r.segments);
-            renderer = r;
+            renderer.update (doc);
+            selection.set_segments (renderer.segments);
             match_index = -1;
 
             stop_scroll_restore ();
@@ -860,6 +870,14 @@ namespace Notes {
                 adj.value = 0;
             }
             update_find_count ();
+        }
+
+        /* Throws the rendered note away, for another note or a new search. */
+        void drop_preview () {
+            preview_overlay.child = null;
+            selection.set_segments (null);
+            renderer = null;
+            preview_dirty = true;
         }
 
         /* A newer render or an explicit scroll replaces a pending restore, which
@@ -1148,6 +1166,7 @@ namespace Notes {
             doc_read_only = false;
             draft = true;
             draft_dir = dir;
+            drop_preview ();
             reload_buffer (text);
             editor.editable = true;
             content_stack.visible_child_name = "document";
