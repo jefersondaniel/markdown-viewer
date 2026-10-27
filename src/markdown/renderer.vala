@@ -431,6 +431,13 @@ namespace Markdown {
 
         /* ---- Lists ---- */
 
+        /* A method rather than a closure: a closure would hold the check button
+         * and the renderer, so neither would be freed when the preview is
+         * replaced. */
+        void on_task_check_toggled (Gtk.CheckButton check) {
+            task_toggled (check.get_data<int> ("md-line"), check.active);
+        }
+
         Gtk.Widget list_widget (Block list, Align align, int depth) {
             int spacing = list.tight ? 4 : 12;
             var box = new Gtk.Box (Gtk.Orientation.VERTICAL, spacing);
@@ -450,8 +457,8 @@ namespace Markdown {
                     check.sensitive = !read_only;
                     check.add_css_class ("md-task");
                     check.set_cursor_from_name ("default");
-                    int line = item.line;
-                    check.toggled.connect (() => task_toggled (line, check.active));
+                    check.set_data<int> ("md-line", item.line);
+                    check.toggled.connect (on_task_check_toggled);
                     marker = check;
                 } else if (list.ordered) {
                     var num = new Gtk.Label ("%d.".printf (number++));
@@ -606,23 +613,7 @@ namespace Markdown {
             scroller.propagate_natural_height = true;
             scroller.child = view;
 
-            var copy = new Gtk.Button.from_icon_name ("edit-copy-symbolic");
-            copy.tooltip_text = _("Copy Diagram Source");
-            copy.halign = Gtk.Align.END;
-            copy.valign = Gtk.Align.START;
-            copy.margin_top = 6;
-            copy.margin_end = 6;
-            copy.add_css_class ("flat");
-            copy.add_css_class ("md-copy");
-            copy.set_cursor_from_name ("default");
-            copy.clicked.connect (() => {
-                copy.get_clipboard ().set_text (code);
-                copy.icon_name = "object-select-symbolic";
-                Timeout.add (1500, () => {
-                    copy.icon_name = "edit-copy-symbolic";
-                    return Source.REMOVE;
-                });
-            });
+            var copy = copy_button (code, _("Copy Diagram Source"));
 
             var overlay = new Gtk.Overlay ();
             overlay.child = scroller;
@@ -630,6 +621,31 @@ namespace Markdown {
             overlay.overflow = Gtk.Overflow.HIDDEN;
             overlay.add_css_class ("md-diagram");
             return overlay;
+        }
+
+        /* The button that copies a code block or a diagram's source. It's built
+         * in a static method, and its handler uses the button it's given instead
+         * of capturing it, so the closure holds neither the button nor the
+         * renderer. Either would keep the replaced preview from being freed. */
+        static Gtk.Button copy_button (string code, string tooltip) {
+            var copy = new Gtk.Button.from_icon_name ("edit-copy-symbolic");
+            copy.tooltip_text = tooltip;
+            copy.halign = Gtk.Align.END;
+            copy.valign = Gtk.Align.START;
+            copy.margin_top = 6;
+            copy.margin_end = 6;
+            copy.add_css_class ("flat");
+            copy.add_css_class ("md-copy");
+            copy.set_cursor_from_name ("default");
+            copy.clicked.connect ((button) => {
+                button.get_clipboard ().set_text (code);
+                button.icon_name = "object-select-symbolic";
+                Timeout.add (1500, () => {
+                    button.icon_name = "edit-copy-symbolic";
+                    return Source.REMOVE;
+                });
+            });
+            return copy;
         }
 
         Gtk.Widget code_widget (Block b) {
@@ -689,23 +705,7 @@ namespace Markdown {
             }
             body.append (scroller);
 
-            var copy = new Gtk.Button.from_icon_name ("edit-copy-symbolic");
-            copy.tooltip_text = _("Copy");
-            copy.halign = Gtk.Align.END;
-            copy.valign = Gtk.Align.START;
-            copy.margin_top = 6;
-            copy.margin_end = 6;
-            copy.add_css_class ("flat");
-            copy.add_css_class ("md-copy");
-            copy.set_cursor_from_name ("default");
-            copy.clicked.connect (() => {
-                copy.get_clipboard ().set_text (code);
-                copy.icon_name = "object-select-symbolic";
-                Timeout.add (1500, () => {
-                    copy.icon_name = "edit-copy-symbolic";
-                    return Source.REMOVE;
-                });
-            });
+            var copy = copy_button (code, _("Copy"));
 
             var overlay = new Gtk.Overlay ();
             overlay.child = body;
