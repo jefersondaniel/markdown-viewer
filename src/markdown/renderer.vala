@@ -35,8 +35,7 @@ namespace Markdown {
         /* Headings, with the slug of their text before duplicates are numbered. */
         public string[] slugs = {};
         public GenericArray<Gtk.Widget> headings = new GenericArray<Gtk.Widget> ();
-        public GenericArray<Gtk.Widget> match_widgets = new GenericArray<Gtk.Widget> ();
-        public int match_count;
+        public GenericArray<Gtk.Label> labels = new GenericArray<Gtk.Label> ();
 
         public Section (string key, int line, Block block, Block? subtitle) {
             this.key = key;
@@ -54,7 +53,6 @@ namespace Markdown {
 
         public File? base_dir { get; set; }
         public bool read_only { get; set; }
-        public string highlight { get; set; default = ""; }
 
         /* Code blocks follow the dark style without being rendered again. */
         public bool dark {
@@ -79,11 +77,10 @@ namespace Markdown {
         /* The rendered note. It stays the same widget across updates. */
         public Gtk.Box content { get; private set; }
 
-        public int match_count { get; private set; }
-        public GenericArray<Gtk.Widget> match_widgets = new GenericArray<Gtk.Widget> ();
-
         /* The selectable text of the note, in reading order. */
         public GenericArray<Notes.TextSegment> segments = new GenericArray<Notes.TextSegment> ();
+        /* All of its text labels, in reading order, for search. */
+        public GenericArray<Gtk.Label> labels = new GenericArray<Gtk.Label> ();
 
         GenericArray<Section> sections = new GenericArray<Section> ();
         /* The section being rendered. It collects segments, headings and matches. */
@@ -104,8 +101,6 @@ namespace Markdown {
         }
 
         HashTable<string, Gtk.Widget> anchors = new HashTable<string, Gtk.Widget> (str_hash, str_equal);
-        Regex? highlight_re;
-        bool label_matched;
 
         /* How copied text joins the next segment to the one before: blocks are
          * separated by a blank line, list items by a line break, table cells
@@ -132,14 +127,6 @@ namespace Markdown {
          * only the others are rendered.
          */
         public void update (Block doc) {
-            if (highlight != "" && highlight_re == null) {
-                try {
-                    highlight_re = new Regex (Regex.escape_string (highlight), RegexCompileFlags.CASELESS);
-                } catch (RegexError e) {
-                    highlight_re = null;
-                }
-            }
-
             for (int k = 0; k < sections.length; k++) {
                 sections[k].index = k;
                 sections[k].reused = false;
@@ -615,8 +602,7 @@ namespace Markdown {
         /* Gathers what the rendered sections hold, in reading order. */
         void collect () {
             segments = new GenericArray<Notes.TextSegment> ();
-            match_widgets = new GenericArray<Gtk.Widget> ();
-            match_count = 0;
+            labels = new GenericArray<Gtk.Label> ();
             anchors.remove_all ();
             var slug_counts = new HashTable<string, int> (str_hash, str_equal);
             foreach (var section in sections) {
@@ -646,10 +632,9 @@ namespace Markdown {
             foreach (var segment in section.segments) {
                 segments.add (segment);
             }
-            foreach (var widget in section.match_widgets) {
-                match_widgets.add (widget);
+            foreach (var label in section.labels) {
+                labels.add (label);
             }
-            match_count += section.match_count;
             for (int k = 0; k < section.slugs.length; k++) {
                 string slug = section.slugs[k];
                 int seen = slug_counts.lookup (slug);
@@ -883,7 +868,6 @@ namespace Markdown {
          * all the segments of the note. */
         Gtk.Label text_label (Inline? from, Inline? stop, string css, Align align, bool selectable = true) {
             var sb = new StringBuilder ();
-            label_matched = false;
             for (Inline? c = from; c != null && c != stop; c = c.next) {
                 markup_node (sb, c, false);
             }
@@ -911,9 +895,7 @@ namespace Markdown {
                 link_activated (uri);
                 return true;
             });
-            if (label_matched) {
-                current.match_widgets.add (label);
-            }
+            current.labels.add (label);
             if (selectable) {
                 add_segment (label);
             }
@@ -949,7 +931,7 @@ namespace Markdown {
         void markup_node (StringBuilder sb, Inline node, bool in_link) {
             switch (node.kind) {
             case InlineKind.TEXT:
-                sb.append (escape (node.text));
+                sb.append (Markup.escape_text (node.text));
                 break;
             // Like GitHub comments and most note apps, a line break in the source is kept.
             case InlineKind.SOFTBREAK:
@@ -958,7 +940,7 @@ namespace Markdown {
                 break;
             case InlineKind.CODE:
                 sb.append ("<span font_family=\"monospace\" size=\"90%\" background=\"#7f7f7f\" bgalpha=\"16%\"> ");
-                sb.append (escape (node.text));
+                sb.append (Markup.escape_text (node.text));
                 sb.append (" </span>");
                 break;
             case InlineKind.EMPH:
@@ -1014,44 +996,13 @@ namespace Markdown {
                 // An image in the middle of a sentence: show its description.
                 string alt = node.plain_text ();
                 sb.append ("<i>");
-                sb.append (escape (alt != "" ? alt : "image"));
+                sb.append (Markup.escape_text (alt != "" ? alt : "image"));
                 sb.append ("</i>");
                 break;
             default:
                 markup_children (sb, node, in_link);
                 break;
             }
-        }
-
-        /* Escapes text for Pango markup and wraps search matches in a highlight. */
-        string escape (string s) {
-            if (highlight_re == null) {
-                return Markup.escape_text (s);
-            }
-            var sb = new StringBuilder ();
-            int last = 0;
-            MatchInfo mi;
-            try {
-                if (highlight_re.match (s, 0, out mi)) {
-                    do {
-                        int a, b;
-                        mi.fetch_pos (0, out a, out b);
-                        if (b <= a) {
-                            break;
-                        }
-                        sb.append (Markup.escape_text (s.substring (last, a - last)));
-                        sb.append ("<span background=\"#f6d32d\" foreground=\"#1e1e1e\">");
-                        sb.append (Markup.escape_text (s.substring (a, b - a)));
-                        sb.append ("</span>");
-                        last = b;
-                        current.match_count++;
-                        label_matched = true;
-                    } while (mi.next ());
-                }
-            } catch (RegexError e) {
-            }
-            sb.append (Markup.escape_text (s.substring (last)));
-            return sb.str;
         }
 
         void register_anchor (string text, Gtk.Widget widget) {

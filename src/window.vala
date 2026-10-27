@@ -68,6 +68,7 @@ namespace Notes {
         Markdown.Renderer? renderer;
         Gtk.Overlay preview_overlay = new Gtk.Overlay ();
         TextSelection selection;
+        FindHighlight find_highlight;
         GtkSource.SearchSettings search_settings;
         GtkSource.SearchContext search_context;
 
@@ -166,6 +167,8 @@ namespace Notes {
 
         void setup_preview () {
             preview_clamp.child = preview_overlay;
+            // Below the selection, which is drawn over the matches.
+            find_highlight = new FindHighlight (preview_overlay);
             selection = new TextSelection (preview_overlay, preview_scroller);
             selection.select_all_requested.connect (() => {
                 if (renderer != null) {
@@ -193,8 +196,8 @@ namespace Notes {
                     run_find ();
                 } else {
                     search_settings.search_text = null;
-                    preview_dirty = true;
-                    render_preview (true);
+                    find_highlight.query = "";
+                    match_index = -1;
                 }
             });
             find_entry.search_changed.connect (run_find);
@@ -831,9 +834,8 @@ namespace Notes {
             preview_dirty = false;
 
             var doc = new Markdown.Parser ().parse (editor.buffer.text);
-            string highlight = find_bar.search_mode_enabled ? find_entry.text : "";
             File? dir = doc_dir ();
-            if (renderer != null && (renderer.highlight != highlight || renderer.read_only != doc_read_only
+            if (renderer != null && (renderer.read_only != doc_read_only
                                      || (renderer.base_dir == null) != (dir == null)
                                      || (dir != null && !dir.equal (renderer.base_dir)))) {
                 drop_preview ();
@@ -846,7 +848,6 @@ namespace Notes {
                 r.base_dir = dir;
                 r.dark = Adw.StyleManager.get_default ().dark;
                 r.read_only = doc_read_only;
-                r.highlight = highlight;
                 r.link_activated.connect (on_link_activated);
                 r.task_toggled.connect (on_task_toggled);
                 r.appended.connect (on_preview_appended);
@@ -863,10 +864,11 @@ namespace Notes {
             renderer.update (doc);
             // A long note is rendered a little at a time when it's new. Searching
             // it, or going back to where it was scrolled to, needs all of it.
-            if (highlight != "" || (created && keep_scroll && position > 0)) {
+            if (find_highlight.query != "" || (created && keep_scroll && position > 0)) {
                 renderer.finish ();
             }
             selection.set_segments (renderer.segments);
+            find_highlight.set_labels (renderer.labels);
             match_index = -1;
 
             stop_scroll_restore ();
@@ -887,13 +889,15 @@ namespace Notes {
         /* More of a long note was rendered. A selection in what was there stays. */
         void on_preview_appended () {
             selection.set_segments (renderer.segments, true);
+            find_highlight.set_labels (renderer.labels);
             update_find_count ();
         }
 
-        /* Throws the rendered note away, for another note or a new search. */
+        /* Throws the rendered note away, for another note. */
         void drop_preview () {
             preview_overlay.child = null;
             selection.set_segments (null);
+            find_highlight.set_labels (null);
             renderer = null;
             preview_dirty = true;
         }
@@ -1119,8 +1123,12 @@ namespace Notes {
         void run_find () {
             string query = find_entry.text;
             search_settings.search_text = query != "" ? query : null;
-            preview_dirty = true;
-            render_preview (true);
+            // The preview is searched where it is: matches are drawn over it.
+            if (query != "" && renderer != null && renderer.finish ()) {
+                find_highlight.set_labels (renderer.labels);
+            }
+            find_highlight.query = query;
+            match_index = -1;
             update_find_count ();
         }
 
@@ -1130,7 +1138,7 @@ namespace Notes {
                 return;
             }
             bool in_editor = editor_scroller.visible && !preview_scroller.visible;
-            int count = in_editor ? search_context.occurrences_count : (renderer != null ? renderer.match_count : 0);
+            int count = in_editor ? search_context.occurrences_count : find_highlight.count;
             if (count < 0) {
                 return;  // still counting
             }
@@ -1151,10 +1159,10 @@ namespace Notes {
                     editor.scroll_to_mark (buffer.get_insert (), 0.2, false, 0, 0);
                 }
             }
-            if (preview_scroller.visible && renderer != null && renderer.match_widgets.length > 0) {
-                int n = (int) renderer.match_widgets.length;
+            if (preview_scroller.visible && find_highlight.matched_labels > 0) {
+                int n = find_highlight.matched_labels;
                 match_index = ((match_index + (forward ? 1 : -1)) % n + n) % n;
-                scroll_to_widget (renderer.match_widgets[match_index]);
+                scroll_to_widget (find_highlight.matched_label (match_index));
             }
         }
 
