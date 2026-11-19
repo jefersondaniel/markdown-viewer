@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.3](https://github.com/jefersondaniel/markdown-viewer/compare/v0.5.2...v0.5.3) (2026-11-19)
+
+
+### Bug Fixes
+
+* **renderer:** stop blank lines in lists that hold a table ([#46](https://github.com/jefersondaniel/markdown-viewer/issues/46)) ([299a93e](https://github.com/jefersondaniel/markdown-viewer/commit/299a93e1ad1c3b8db2a14313c197b7f223174bab))
+
 ## [0.5.2](https://github.com/jefersondaniel/markdown-viewer/compare/v0.5.1...v0.5.2) (2026-11-19)
 
 
