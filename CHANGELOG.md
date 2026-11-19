@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.2](https://github.com/jefersondaniel/markdown-viewer/compare/v0.5.1...v0.5.2) (2026-11-19)
+
+
+### Bug Fixes
+
+* **window:** show the whole note after another program saves it ([#44](https://github.com/jefersondaniel/markdown-viewer/issues/44)) ([932b660](https://github.com/jefersondaniel/markdown-viewer/commit/932b66078ecd6b1ce5a0698eb8207f8188473d9a))
+
 ## [0.5.1](https://github.com/jefersondaniel/markdown-viewer/compare/v0.5.0...v0.5.1) (2026-10-27)
 
 
