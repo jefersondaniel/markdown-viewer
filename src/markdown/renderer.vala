@@ -1052,7 +1052,12 @@ namespace Markdown {
             block_separator = "\n";
             for (int k = 0; k < list.children.length; k++) {
                 Block item = list.children[k];
-                var row = new Gtk.Box (Gtk.Orientation.HORIZONTAL, 8);
+                // A grid, not a horizontal box: a box sizes its children by
+                // asking how wide they must be at the row's height, and wrapped
+                // text can answer wider than the row. Under a table that left
+                // items running past the edge, with blank lines below them.
+                var row = new Gtk.Grid ();
+                row.column_spacing = 8;
 
                 Gtk.Widget marker;
                 if (item.task) {
@@ -1078,14 +1083,14 @@ namespace Markdown {
                 }
                 // Text markers sit on the baseline of the item's first line.
                 marker.valign = item.task ? Gtk.Align.START : Gtk.Align.BASELINE_FILL;
-                row.append (marker);
+                row.attach (marker, 0, 0);
 
                 var content = new Gtk.Box (Gtk.Orientation.VERTICAL, spacing);
                 content.hexpand = true;
                 content.baseline_child = 0;
                 content.valign = Gtk.Align.BASELINE_FILL;
                 render_children (item, content, align, depth + 1);
-                row.append (content);
+                row.attach (content, 1, 0);
                 box.append (row);
             }
             block_separator = outer_separator;
