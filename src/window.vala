@@ -506,7 +506,12 @@ namespace Notes {
                         && file.equal (doc_file)) {
                         doc_moved_to = other;
                     }
-                    schedule_disk_check ();
+                    // A program that writes the file in place empties it first and
+                    // may take a while to write the rest. Reading it before it's done
+                    // would show only the start of the note, so wait for the hint
+                    // that comes when the file is closed, or for the writes to stop.
+                    bool writing = event == FileMonitorEvent.CHANGED || event == FileMonitorEvent.CREATED;
+                    schedule_disk_check (writing ? 2000 : 250);
                 });
             } catch (Error e) {
                 warning ("Could not watch %s: %s", doc_file.get_basename (), e.message);
@@ -525,12 +530,13 @@ namespace Notes {
             doc_moved_to = null;
         }
 
-        /* Changes usually come in bursts, so look at the file once they settle. */
-        void schedule_disk_check () {
+        /* Changes usually come in bursts, so look at the file once they settle:
+         * `delay` milliseconds after the last one. */
+        void schedule_disk_check (uint delay = 250) {
             if (disk_check_source != 0) {
                 Source.remove (disk_check_source);
             }
-            disk_check_source = Timeout.add (250, () => {
+            disk_check_source = Timeout.add (delay, () => {
                 disk_check_source = 0;
                 check_document_on_disk ();
                 return Source.REMOVE;
